@@ -1,0 +1,3278 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DentFlow • النظام المتكامل مع دعم اللغات والتحسينات</title>
+    <!-- Bootstrap 5.3 RTL -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.rtl.min.css">
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Lateef للعربية، Noto Naskh للإنجليزية -->
+    <link href="https://fonts.googleapis.com/css2?family=Lateef:wght@400;600;800&family=Noto+Naskh+Arabic:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Bootstrap Datepicker -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/css/bootstrap-datepicker.standalone.min.css">
+    <!-- particles.js -->
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+    <!-- bcryptjs & CryptoJS fallback -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bcryptjs/2.4.3/bcrypt.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Datepicker JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/locales/bootstrap-datepicker.ar.min.js"></script>
+    <!-- jsPDF و html2canvas لتحميل PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Lateef', 'Noto Naskh Arabic', 'Droid Arabic Naskh', serif;
+            background: linear-gradient(135deg, #0b4f6c, #1a7f9e);
+            color: #fff;
+            font-size: 18px;
+            line-height: 1.5;
+            min-height: 100vh;
+            transition: background 0.3s;
+        }
+        body.in-app {
+            font-family: 'Lateef', 'Noto Naskh Arabic', 'Droid Arabic Naskh', serif;
+        }
+        body.in-app.english {
+            font-family: 'Noto Naskh Arabic', 'Lateef', serif;
+        }
+        body.dark-mode {
+            background: linear-gradient(135deg, #1a1e2b, #2d3748);
+        }
+        body.english {
+            direction: ltr;
+        }
+        body.english .sidebar {
+            border-left: none;
+            border-right: 1px solid rgba(255,255,255,0.2);
+        }
+        body.english .page-title::after {
+            right: auto;
+            left: 0;
+        }
+        select.custom-select {
+            appearance: none;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="%2300cec9" viewBox="0 0 16 16"><path d="M8 11L3 6h10l-5 5z"/></svg>');
+            background-repeat: no-repeat;
+            background-position: left 10px center;
+            background-size: 16px;
+        }
+        body.english select.custom-select {
+            background-position: right 10px center;
+        }
+        .menu-toggle {
+            display: none;
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            background: #00cec9;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 24px;
+            color: white;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        body.english .menu-toggle {
+            left: auto;
+            right: 20px;
+        }
+        .sidebar {
+            background: rgba(20, 30, 40, 0.85);
+            backdrop-filter: blur(12px);
+            border-left: 1px solid rgba(255, 255, 255, 0.3);
+            min-height: 100vh;
+            height: 100vh;
+            padding: 2rem 1.5rem 1rem 1.5rem;
+            position: sticky;
+            top: 0;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.3s ease;
+            overflow-y: auto;
+            color: #fff;
+        }
+        .sidebar.collapsed { transform: translateX(100%); }
+        .sidebar-content { flex: 1; }
+        .sidebar .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 2rem;
+        }
+        .sidebar .logo-icon {
+            width: 48px;
+            height: 48px;
+            background: #00cec9;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            color: white;
+            box-shadow: 0 0 15px #00cec9;
+        }
+        .sidebar .logo-text {
+            font-size: 26px;
+            font-weight: 700;
+            color: white;
+        }
+        .sidebar .logo-text span { color: #00cec9; }
+        .sidebar .user-info {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 15px;
+            border-radius: 18px;
+            margin-bottom: 30px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .profile-pic {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #00cec9;
+            margin-bottom: 10px;
+            cursor: pointer;
+            box-shadow: 0 0 15px #00cec9;
+        }
+        .profile-pic:hover { opacity: 0.8; }
+        .sidebar .nav-link {
+            color: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            margin: 5px 0;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            transition: all 0.3s;
+        }
+        .sidebar .nav-link i { color: #00cec9; width: 28px; }
+        .sidebar .nav-link:hover {
+            background: rgba(255, 255, 255, 0.3);
+            color: white;
+            transform: translateX(-5px);
+        }
+        .sidebar .nav-link.active {
+            background: #00cec9;
+            color: #0b4f6c;
+        }
+        .sidebar .nav-link.active i { color: #0b4f6c; }
+        .logout-btn, #darkModeToggle, #langToggle, .delete-account-btn, .reset-app-btn {
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            border-radius: 30px;
+            padding: 8px 20px;
+            width: 100%;
+            margin-top: 10px;
+            transition: all 0.3s;
+            display: block;
+            text-align: center;
+        }
+        .logout-btn:hover, #darkModeToggle:hover, #langToggle:hover, .delete-account-btn:hover, .reset-app-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.02);
+        }
+        .delete-account-btn { background: rgba(220, 53, 69, 0.3); border-color: #dc3545; }
+        #particles-js {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            top: 0;
+            left: 0;
+        }
+        .glass {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s;
+        }
+        .glass-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+        }
+        .auth-wrapper {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .auth-card {
+            max-width: 500px;
+            width: 100%;
+            padding: 40px;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            animation: float 6s ease-in-out infinite;
+        }
+        @keyframes float {
+            0% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0); }
+        }
+        .auth-logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 30px;
+        }
+        .auth-logo .logo-icon {
+            width: 60px;
+            height: 60px;
+            background: #00cec9;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            color: white;
+            box-shadow: 0 0 20px #00cec9;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 20px #00cec9; }
+            50% { box-shadow: 0 0 40px #00cec9; }
+            100% { box-shadow: 0 0 20px #00cec9; }
+        }
+        .auth-logo .logo-text {
+            font-size: 40px;
+            font-weight: 800;
+            color: white;
+            text-shadow: 0 0 5px rgba(255,255,255,0.5);
+        }
+        .auth-logo .logo-text span { color: #00cec9; text-shadow: 0 0 5px #00cec9; }
+        .auth-tabs .btn {
+            width: 50%;
+            border: none;
+            background: transparent;
+            color: rgba(255, 255, 255, 0.7);
+            font-weight: 600;
+            padding: 15px;
+            font-size: 18px;
+        }
+        .auth-tabs .btn.active {
+            color: #00cec9;
+            border-bottom: 3px solid #00cec9;
+        }
+        .auth-form { display: none; margin-top: 30px; }
+        .auth-form.active { display: block; }
+        .auth-form input, .auth-form select {
+            width: 100%;
+            margin-bottom: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            border-radius: 12px;
+            padding: 12px 15px;
+        }
+        .auth-form input::placeholder { color: rgba(255, 255, 255, 0.6); }
+        .btn-accent {
+            background: #00cec9;
+            border: none;
+            color: white;
+            border-radius: 12px;
+            padding: 12px;
+            font-weight: 600;
+            width: 100%;
+            box-shadow: 0 0 15px #00cec9;
+            transition: all 0.3s;
+        }
+        .btn-accent:hover {
+            background: #00b894;
+            transform: scale(1.02);
+            box-shadow: 0 0 25px #00cec9;
+        }
+        #mainApp { display: none; }
+        #loadingOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 99999;
+        }
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 6px solid rgba(255, 255, 255, 0.3);
+            border-top-color: #00cec9;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .date-fields {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            direction: ltr;
+        }
+        .date-fields input {
+            width: 70px;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            border-radius: 8px;
+            padding: 8px;
+        }
+        .date-fields span {
+            font-size: 20px;
+            color: #00cec9;
+            font-weight: bold;
+        }
+        .main-content {
+            padding: 30px;
+            min-height: 100vh;
+        }
+        .page-title {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            position: relative;
+            padding-top: 10px;
+        }
+        .page-title::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            right: 0;
+            width: 60px;
+            height: 4px;
+            background: #00cec9;
+            border-radius: 4px;
+            box-shadow: 0 0 10px #00cec9;
+        }
+        .horizontal-tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+            margin-top: 15px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(8px);
+            padding: 12px 15px;
+            border-radius: 40px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .horizontal-tab {
+            padding: 8px 16px;
+            border-radius: 30px;
+            font-weight: 600;
+            color: white;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .horizontal-tab:hover { background: rgba(255, 255, 255, 0.2); }
+        .horizontal-tab.active {
+            background: #00cec9;
+            color: white;
+            box-shadow: 0 0 15px #00cec9;
+        }
+        .card {
+            border: none;
+            border-radius: 20px;
+            margin-bottom: 20px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .card:hover {
+            transform: scale(1.02);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+        }
+        .card-header {
+            background: transparent;
+            border-bottom: 2px solid #00cec9;
+            border-radius: 20px 20px 0 0 !important;
+            padding: 15px 20px;
+            font-weight: 700;
+            font-size: 1.4rem;
+        }
+        .card-header i { color: #00cec9; margin-left: 8px; }
+        .card-body { padding: 1.5rem; }
+        .form-label {
+            font-weight: 600;
+            color: white;
+            margin-bottom: 5px;
+            font-size: 16px;
+        }
+        .form-control, .form-select {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            border-radius: 10px;
+            padding: 10px 12px;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: #00cec9;
+            box-shadow: 0 0 0 0.2rem rgba(0, 206, 201, 0.25);
+            background: rgba(255, 255, 255, 0.15);
+        }
+        .question-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 12px;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .btn-primary {
+            background: #6c5ce7;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 20px;
+            font-weight: 600;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #00cec9;
+            transform: scale(1.02);
+        }
+        .btn-outline-accent {
+            border: 2px solid #00cec9;
+            color: #00cec9;
+            background: transparent;
+            border-radius: 8px;
+            padding: 8px 18px;
+            font-weight: 600;
+        }
+        .btn-outline-accent:hover {
+            background: #00cec9;
+            color: white;
+        }
+        .contract-box {
+            background: rgba(0,0,0,0.2);
+            padding: 20px;
+            border-radius: 15px;
+            border: 1px solid rgba(255,255,255,0.1);
+            max-height: 500px;
+            overflow-y: auto;
+            line-height: 1.8;
+        }
+        .queue-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        .queue-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 18px;
+            padding: 15px;
+        }
+        .queue-card h4 {
+            color: #00cec9;
+            border-bottom: 2px solid #00cec9;
+            padding-bottom: 8px;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        .patient-item {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 14px;
+            padding: 10px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-right: 4px solid #00cec9;
+            font-size: 16px;
+            color: white;
+        }
+        .patient-actions button {
+            margin: 0 2px;
+            padding: 4px 8px;
+            font-size: 14px;
+        }
+        .start-session-btn {
+            background: #00b894;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 4px 10px;
+            font-weight: 600;
+        }
+        .tab-pane-custom { display: none; }
+        .tab-pane-custom.active { display: block; }
+        .navigation-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 25px;
+        }
+        .footer {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            padding: 12px;
+            text-align: center;
+            margin-top: 30px;
+        }
+        .custom-toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            color: white;
+            padding: 12px 30px;
+            border-radius: 50px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            border-right: 5px solid #00cec9;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: slideDown 0.3s ease;
+        }
+        @keyframes slideDown {
+            from { top: -100px; opacity: 0; }
+            to { top: 20px; opacity: 1; }
+        }
+        .password-field {
+            position: relative;
+        }
+        .password-field input {
+            padding-left: 40px;
+        }
+        .toggle-password {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: rgba(255,255,255,0.7);
+            z-index: 10;
+        }
+        .toggle-password:hover { color: #00cec9; }
+        .xray-preview {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 10px;
+            margin-top: 10px;
+            border: 2px solid #00cec9;
+            cursor: pointer;
+        }
+        .search-box { margin-bottom: 20px; }
+        .doctor-badge {
+            background: #00cec9;
+            color: #0b4f6c;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 700;
+            margin-right: 8px;
+        }
+        .table {
+            color: white;
+        }
+        .table th, .table td {
+            border-color: rgba(255,255,255,0.2);
+        }
+        .filter-section {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+        .filter-section select, .filter-section input {
+            flex: 1;
+            min-width: 150px;
+        }
+        .case-images-btn {
+            background: #00cec9;
+            color: white;
+            border: none;
+            border-radius: 30px;
+            padding: 10px 20px;
+            margin-top: 10px;
+            width: 100%;
+        }
+        .error-feedback {
+            color: #ff6b6b;
+            font-size: 14px;
+            margin-top: -10px;
+            margin-bottom: 10px;
+            text-align: right;
+        }
+        .image-viewer-modal .modal-dialog {
+            max-width: 90vw;
+            max-height: 90vh;
+        }
+        .image-viewer-modal .modal-content {
+            background: transparent;
+            border: none;
+            box-shadow: none;
+        }
+        .image-viewer-body {
+            text-align: center;
+            position: relative;
+        }
+        .image-viewer-body img {
+            max-width: 100%;
+            max-height: 80vh;
+            border-radius: 10px;
+        }
+        .nav-arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 3rem;
+            color: white;
+            cursor: pointer;
+            text-shadow: 0 0 10px black;
+            z-index: 10;
+        }
+        .nav-arrow.left {
+            left: 10px;
+        }
+        .nav-arrow.right {
+            right: 10px;
+        }
+        .delete-image-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(220,53,69,0.8);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        .image-container {
+            position: relative;
+            display: inline-block;
+        }
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                top: 0;
+                right: 0;
+                width: 280px;
+                z-index: 999;
+                transform: translateX(100%);
+                height: 100vh;
+                overflow-y: auto;
+            }
+            .sidebar.show { transform: translateX(0); }
+            .menu-toggle { display: block; }
+            .queue-container { grid-template-columns: 1fr; }
+        }
+        .lang-switch {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 10px;
+            margin-bottom: 20px;
+        }
+        .lang-switch button {
+            background: rgba(255,255,255,0.2);
+            border: 1px solid #00cec9;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 30px;
+            font-weight: 600;
+            transition: 0.3s;
+        }
+        .lang-switch button.active {
+            background: #00cec9;
+            color: #0b4f6c;
+        }
+    </style>
+</head>
+<body>
+    <div id="particles-js"></div>
+    <div id="loadingOverlay"><div class="spinner"></div></div>
+
+    <!-- شاشة الدخول -->
+    <div id="authWrapper" class="auth-wrapper">
+        <div class="auth-card">
+            <div class="auth-logo">
+                <div class="logo-icon"><i class="fas fa-tooth"></i></div>
+                <div class="logo-text">Dent<span>Flow</span></div>
+            </div>
+            <!-- إضافة اختيار اللغة في صفحة الدخول -->
+            <div class="lang-switch">
+                <button id="langAuthAr" class="active">العربية</button>
+                <button id="langAuthEn">English</button>
+            </div>
+            <div class="auth-tabs d-flex">
+                <button class="btn active" id="tabLogin" data-i18n="login">تسجيل الدخول</button>
+                <button class="btn" id="tabRegister" data-i18n="register">إنشاء حساب</button>
+            </div>
+            <div id="loginForm" class="auth-form active">
+                <!-- إضافة class custom-select للسهم المعكوس -->
+                <select id="loginType" class="form-select custom-select">
+                    <option value="patient" data-i18n="patient">مريض</option>
+                    <option value="doctor" data-i18n="doctor">طبيب</option>
+                </select>
+                <input type="text" id="loginUsername" class="form-control" placeholder="اسم المستخدم" data-i18n-placeholder="username">
+                <div class="error-feedback" id="loginUsernameError"></div>
+                <div class="password-field">
+                    <input type="password" id="loginPassword" class="form-control" placeholder="كلمة المرور" data-i18n-placeholder="password">
+                    <i class="fas fa-eye toggle-password" onclick="togglePassword('loginPassword', this)"></i>
+                </div>
+                <div class="error-feedback" id="loginPasswordError"></div>
+                <button class="btn-accent" id="loginBtn" data-i18n="login">دخول</button>
+            </div>
+            <div id="registerForm" class="auth-form">
+                <select id="regType" class="form-select custom-select">
+                    <option value="patient" data-i18n="patient">مريض</option>
+                    <option value="doctor" data-i18n="doctor">طبيب</option>
+                </select>
+                <input type="text" id="regName" class="form-control" placeholder="الاسم الكامل" data-i18n-placeholder="fullName">
+                <input type="text" id="regUsername" class="form-control" placeholder="اسم المستخدم" data-i18n-placeholder="username">
+                <div class="password-field">
+                    <input type="password" id="regPassword" class="form-control" placeholder="كلمة المرور" data-i18n-placeholder="password">
+                    <i class="fas fa-eye toggle-password" onclick="togglePassword('regPassword', this)"></i>
+                </div>
+                <div id="doctorField" style="display: none;">
+                    <input type="text" id="regClinic" class="form-control" placeholder="اسم العيادة" data-i18n-placeholder="clinicName">
+                </div>
+                <button class="btn-accent" id="registerBtn" data-i18n="register">تسجيل</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- مودالات -->
+    <div class="modal fade" id="deleteAccountModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content glass-card">
+                <div class="modal-header">
+                    <h5 class="modal-title" data-i18n="confirmDeleteAccount">تأكيد حذف الحساب</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p data-i18n="deleteWarning">هل أنت متأكد؟ لا يمكن التراجع عن هذا الإجراء.</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal" data-i18n="cancel">إلغاء</button>
+                    <button class="btn btn-danger" id="confirmDeleteAccount" data-i18n="deleteConfirm">حذف نهائي</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="resetAppModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content glass-card">
+                <div class="modal-header">
+                    <h5 class="modal-title" data-i18n="resetData">مسح جميع البيانات</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p data-i18n="resetWarning">سيتم حذف جميع المستخدمين والمواعيد. هل أنت متأكد؟</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal" data-i18n="cancel">إلغاء</button>
+                    <button class="btn btn-danger" id="confirmResetApp" data-i18n="resetConfirm">مسح الكل</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="subscriptionModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content glass-card">
+                <div class="modal-header">
+                    <h5 class="modal-title" data-i18n="renewSubscription">تجديد الاشتراك</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p data-i18n="subscriptionExpired">انتهت صلاحية اشتراكك. يرجى تجديد الاشتراك لمواصلة استخدام النظام.</p>
+                    <button class="btn btn-accent w-100" onclick="startSubscription()" data-i18n="renewNow">تجديد الاشتراك (شهر واحد)</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="uploadPicModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content glass-card">
+                <div class="modal-header">
+                    <h5 class="modal-title" data-i18n="changeProfilePic">تغيير الصورة الشخصية</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="file" id="profilePicUpload" accept="image/*" class="form-control">
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal" data-i18n="cancel">إلغاء</button>
+                    <button class="btn btn-primary" id="saveProfilePic" data-i18n="save">حفظ</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="followupModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content glass-card">
+                <div class="modal-header">
+                    <h5 class="modal-title" data-i18n="setFollowup">تحديد موعد متابعة</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <label class="form-label" data-i18n="date">التاريخ</label>
+                    <input type="text" class="form-control datepicker" id="followupDate">
+                    <label class="form-label mt-3" data-i18n="time">الوقت</label>
+                    <input type="time" class="form-control" id="followupTime">
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal" data-i18n="cancel">إلغاء</button>
+                    <button class="btn btn-primary" id="saveFollowup" data-i18n="save">حفظ</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="toothModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content glass-card">
+                <div class="modal-header">
+                    <h5 class="modal-title" data-i18n="selectTooth">اختر موقع الألم</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <svg viewBox="0 0 400 200" style="max-width:100%;height:auto;">
+                        <rect x="50" y="20" width="300" height="50" fill="rgba(255,255,255,0.1)" stroke="#00cec9" />
+                        <text x="180" y="50" fill="white" font-size="16" font-weight="bold" data-i18n="upperJaw">الفك العلوي</text>
+                        <g>
+                            <circle cx="80" cy="80" r="12" fill="#00cec9" class="tooth-selector" data-tooth="18" style="cursor:pointer;" />
+                            <text x="76" y="85" fill="white" font-size="12">18</text>
+                            <circle cx="110" cy="80" r="12" fill="#00cec9" class="tooth-selector" data-tooth="17" style="cursor:pointer;" />
+                            <text x="106" y="85" fill="white">17</text>
+                            <circle cx="140" cy="80" r="12" fill="#00cec9" class="tooth-selector" data-tooth="16" style="cursor:pointer;" />
+                            <text x="136" y="85" fill="white">16</text>
+                            <circle cx="170" cy="80" r="12" fill="#00cec9" class="tooth-selector" data-tooth="15" style="cursor:pointer;" />
+                            <text x="166" y="85" fill="white">15</text>
+                            <circle cx="200" cy="80" r="12" fill="#00cec9" class="tooth-selector" data-tooth="14" style="cursor:pointer;" />
+                            <text x="196" y="85" fill="white">14</text>
+                            <circle cx="230" cy="80" r="12" fill="#00cec9" class="tooth-selector" data-tooth="13" style="cursor:pointer;" />
+                            <text x="226" y="85" fill="white">13</text>
+                            <circle cx="260" cy="80" r="12" fill="#00cec9" class="tooth-selector" data-tooth="12" style="cursor:pointer;" />
+                            <text x="256" y="85" fill="white">12</text>
+                            <circle cx="290" cy="80" r="12" fill="#00cec9" class="tooth-selector" data-tooth="11" style="cursor:pointer;" />
+                            <text x="286" y="85" fill="white">11</text>
+                        </g>
+                        <rect x="50" y="120" width="300" height="50" fill="rgba(255,255,255,0.1)" stroke="#00cec9" />
+                        <text x="180" y="150" fill="white" font-size="16" font-weight="bold" data-i18n="lowerJaw">الفك السفلي</text>
+                        <g>
+                            <circle cx="80" cy="180" r="12" fill="#00cec9" class="tooth-selector" data-tooth="48" style="cursor:pointer;" />
+                            <text x="76" y="185" fill="white">48</text>
+                            <circle cx="110" cy="180" r="12" fill="#00cec9" class="tooth-selector" data-tooth="47" style="cursor:pointer;" />
+                            <text x="106" y="185" fill="white">47</text>
+                            <circle cx="140" cy="180" r="12" fill="#00cec9" class="tooth-selector" data-tooth="46" style="cursor:pointer;" />
+                            <text x="136" y="185" fill="white">46</text>
+                            <circle cx="170" cy="180" r="12" fill="#00cec9" class="tooth-selector" data-tooth="45" style="cursor:pointer;" />
+                            <text x="166" y="185" fill="white">45</text>
+                            <circle cx="200" cy="180" r="12" fill="#00cec9" class="tooth-selector" data-tooth="44" style="cursor:pointer;" />
+                            <text x="196" y="185" fill="white">44</text>
+                            <circle cx="230" cy="180" r="12" fill="#00cec9" class="tooth-selector" data-tooth="43" style="cursor:pointer;" />
+                            <text x="226" y="185" fill="white">43</text>
+                            <circle cx="260" cy="180" r="12" fill="#00cec9" class="tooth-selector" data-tooth="42" style="cursor:pointer;" />
+                            <text x="256" y="185" fill="white">42</text>
+                            <circle cx="290" cy="180" r="12" fill="#00cec9" class="tooth-selector" data-tooth="41" style="cursor:pointer;" />
+                            <text x="286" y="185" fill="white">41</text>
+                        </g>
+                    </svg>
+                    <p class="mt-2" data-i18n="clickTooth">انقر على السن الذي يؤلمك</p>
+                    <input type="hidden" id="selectedTooth">
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-primary" id="confirmTooth" data-i18n="confirm">تأكيد</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- مودال عرض العقد -->
+    <div class="modal fade" id="contractViewModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content glass-card">
+                <div class="modal-header">
+                    <h5 class="modal-title" data-i18n="contract">العقد</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="contractViewBody">
+                    <!-- محتوى العقد سيتم تعبئته ديناميكياً -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-i18n="close">إغلاق</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- مودال صور الحالة مع مشاهد -->
+    <div class="modal fade image-viewer-modal" id="caseImagesModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content glass-card">
+                <div class="modal-header">
+                    <h5 class="modal-title" data-i18n="caseImages">صور الحالة</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="caseImagesBody">
+                    <!-- سيتم تعبئته بالصور مع أزرار التنقل -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-i18n="close">إغلاق</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- مودال طلب تعديل العقد -->
+    <div class="modal fade" id="contractModifyRequestModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content glass-card">
+                <div class="modal-header">
+                    <h5 class="modal-title" data-i18n="modifyRequest">طلب تعديل العقد</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p data-i18n="modifyRequestText">يريد الطبيب تعديل التشخيص أو خطة العلاج. هل توافق؟</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-success" id="approveModify">موافقة</button>
+                    <button class="btn btn-danger" id="rejectModify">رفض</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- التطبيق الرئيسي -->
+    <div id="mainApp">
+        <button class="menu-toggle" id="menuToggle"><i class="fas fa-bars"></i></button>
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-lg-2 col-md-3 sidebar" id="sidebar">
+                    <div class="sidebar-content">
+                        <div class="logo">
+                            <div class="logo-icon"><i class="fas fa-tooth"></i></div>
+                            <div class="logo-text">Dent<span>Flow</span></div>
+                        </div>
+                        <div class="user-info" id="sidebarUserInfo"></div>
+                        <nav class="nav flex-column nav-pills" id="v-pills-tab" role="tablist"></nav>
+                        <button id="darkModeToggle" class="mt-3"><i class="fas fa-moon"></i> <span data-i18n="darkMode">الوضع الليلي</span></button>
+                        <button id="langToggle" class="mt-2"><i class="fas fa-language"></i> <span data-i18n="english">English</span></button>
+                        <button class="delete-account-btn mt-3" id="deleteAccountBtn"><i class="fas fa-trash-alt"></i> <span data-i18n="deleteAccount">حذف حسابي</span></button>
+                        <button class="reset-app-btn mt-2" id="resetAppBtn"><i class="fas fa-undo-alt"></i> <span data-i18n="resetApp">إعادة تعيين التطبيق</span></button>
+                    </div>
+                    <button class="logout-btn" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> <span data-i18n="logout">تسجيل خروج</span></button>
+                </div>
+                <div class="col-lg-10 col-md-9 main-content" id="mainContent">
+                    <div class="tab-content" id="v-pills-tabContent"></div>
+                    <div class="footer">
+                        <i class="fas fa-tooth me-2" style="color: #00cec9;"></i> <span data-i18n="copyright">جميع الحقوق محفوظة &copy; 2025 DentFlow</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="customToast" class="custom-toast" style="display: none;">
+        <i class="fas fa-check-circle"></i>
+        <span id="toastMessage">تمت العملية بنجاح</span>
+    </div>
+
+    <script>
+        // تفعيل الخلفية
+        particlesJS('particles-js', {
+            particles: {
+                number: { value: 50, density: { enable: true, value_area: 800 } },
+                color: { value: '#ffffff' },
+                shape: { type: 'circle' },
+                opacity: { value: 0.4, random: false },
+                size: { value: 2, random: true },
+                line_linked: { enable: false },
+                move: { enable: true, speed: 2, direction: 'none', random: true, straight: false, out_mode: 'out' }
+            },
+            interactivity: {
+                detect_on: 'canvas',
+                events: { onhover: { enable: true, mode: 'repulse' }, onclick: { enable: true, mode: 'push' } },
+                modes: { repulse: { distance: 80, duration: 0.4 }, push: { particles_nb: 2 } }
+            },
+            retina_detect: true
+        });
+
+        window.togglePassword = function(fieldId, icon) {
+            const field = document.getElementById(fieldId);
+            field.type = field.type === 'password' ? 'text' : 'password';
+            icon.classList.toggle('fa-eye-slash');
+            icon.classList.toggle('fa-eye');
+        };
+
+        (function() {
+            if (typeof bcrypt === 'undefined') {
+                window.bcrypt = {
+                    hash: (pwd) => Promise.resolve(CryptoJS.SHA256(pwd).toString()),
+                    compare: (pwd, hash) => Promise.resolve(CryptoJS.SHA256(pwd).toString() === hash)
+                };
+            }
+        })();
+
+        // -------------------- الترجمة الكاملة --------------------
+        const translations = {
+            ar: {
+                // عام
+                save: 'حفظ',
+                cancel: 'إلغاء',
+                confirm: 'تأكيد',
+                delete: 'حذف',
+                edit: 'تعديل',
+                back: 'عودة',
+                next: 'التالي',
+                previous: 'السابق',
+                close: 'إغلاق',
+                // شريط جانبي
+                darkMode: 'الوضع الليلي',
+                english: 'English',
+                deleteAccount: 'حذف حسابي',
+                resetApp: 'إعادة تعيين التطبيق',
+                logout: 'تسجيل خروج',
+                copyright: 'جميع الحقوق محفوظة © 2025 DentFlow',
+                // لوحة التحكم
+                dashboard: 'لوحة التحكم',
+                patients: 'المرضى',
+                appointments: 'المواعيد',
+                invoices: 'الفواتير',
+                reports: 'التقارير',
+                backup: 'النسخ الاحتياطي',
+                myProfile: 'ملفي الطبي',
+                myDoctors: 'أطبائي',
+                myAppointments: 'مواعيدي',
+                currentPatient: 'المريض الحالي',
+                waitingPatients: 'المرضى في الانتظار',
+                followupPatients: 'مرضى تحت المتابعة',
+                donePatients: 'مرضى تم علاجهم',
+                startSession: 'بدء جلسة',
+                viewFile: 'عرض الملف',
+                done: 'تم',
+                followup: 'متابعة',
+                // العقد
+                contract: 'العقد',
+                agree: 'أوافق',
+                disagree: 'لا أوافق',
+                contractApproved: 'تمت الموافقة على العقد ولا يمكن التعديل',
+                contractSaved: 'تم حفظ العقد',
+                modifyRequest: 'طلب تعديل العقد',
+                modifyRequestText: 'يريد الطبيب تعديل التشخيص أو خطة العلاج. هل توافق؟',
+                // الفلتر
+                filter: 'فلتر',
+                search: 'بحث',
+                byDate: 'بالتاريخ',
+                byWeek: 'هذا الأسبوع',
+                byMonth: 'هذا الشهر',
+                byDiagnosis: 'بالتشخيص',
+                all: 'الكل',
+                // كلمة المرور
+                passwordRequirements: 'كلمة المرور يجب أن تكون 8 أحرف على الأقل، تحتوي على حرف كبير ورقم',
+                // الصور
+                uploadImages: 'رفع صور',
+                comment: 'تعليق',
+                xray: 'صورة الأشعة',
+                caseImages: 'صور الحالة',
+                before: 'قبل',
+                after: 'بعد',
+                general: 'عام',
+                // نصوص الدخول
+                login: 'تسجيل الدخول',
+                register: 'إنشاء حساب',
+                patient: 'مريض',
+                doctor: 'طبيب',
+                username: 'اسم المستخدم',
+                password: 'كلمة المرور',
+                fullName: 'الاسم الكامل',
+                clinicName: 'اسم العيادة',
+                confirmDeleteAccount: 'تأكيد حذف الحساب',
+                deleteWarning: 'هل أنت متأكد؟ لا يمكن التراجع عن هذا الإجراء.',
+                deleteConfirm: 'حذف نهائي',
+                resetData: 'مسح جميع البيانات',
+                resetWarning: 'سيتم حذف جميع المستخدمين والمواعيد. هل أنت متأكد؟',
+                resetConfirm: 'مسح الكل',
+                renewSubscription: 'تجديد الاشتراك',
+                subscriptionExpired: 'انتهت صلاحية اشتراكك. يرجى تجديد الاشتراك لمواصلة استخدام النظام.',
+                renewNow: 'تجديد الاشتراك (شهر واحد)',
+                changeProfilePic: 'تغيير الصورة الشخصية',
+                setFollowup: 'تحديد موعد متابعة',
+                date: 'التاريخ',
+                time: 'الوقت',
+                selectTooth: 'اختر موقع الألم',
+                upperJaw: 'الفك العلوي',
+                lowerJaw: 'الفك السفلي',
+                clickTooth: 'انقر على السن الذي يؤلمك',
+                personalData: 'البيانات الشخصية',
+                medicalHistory: 'التاريخ الطبي',
+                dentalHistory: 'التاريخ السني',
+                reasonForVisit: 'سبب الزيارة',
+                treatmentPlan: 'خطة العلاج',
+                faq: 'الأسئلة الشائعة',
+                invalidCredentials: 'بيانات غير صحيحة',
+                wrongPassword: 'كلمة مرور خاطئة',
+                accountCreated: 'تم إنشاء الحساب، سجل الدخول الآن',
+                encryptionError: 'خطأ في التشفير',
+                enterCredentials: 'أدخل اسم المستخدم وكلمة المرور',
+                usernameExists: 'اسم المستخدم موجود',
+                profilePicUpdated: 'تم تحديث الصورة',
+                accountDeleted: 'تم حذف الحساب',
+                dataCleared: 'تم مسح جميع البيانات، سيتم إعادة التحميل',
+                today: 'اليوم',
+                thisWeek: 'هذا الأسبوع',
+                thisMonth: 'هذا الشهر',
+                noCurrentPatient: 'لا يوجد مريض حالي',
+                noWaitingPatients: 'لا يوجد مرضى في الانتظار',
+                noFollowupPatients: 'لا يوجد مرضى تحت المتابعة',
+                noCompletedPatients: 'لا يوجد مرضى تم علاجهم',
+                turn: 'دور',
+                view: 'عرض',
+                add: 'إضافة',
+                total: 'الإجمالي',
+                printReport: 'طباعة التقرير',
+                downloadBackup: 'تحميل نسخة احتياطية',
+                createInvoice: 'إنشاء فاتورة',
+                service: 'الخدمة',
+                amount: 'المبلغ',
+                invoiceList: 'قائمة الفواتير',
+                upcomingAppointments: 'المواعيد القادمة',
+                addAppointment: 'إضافة موعد',
+                patientName: 'اسم المريض',
+                diagnosis: 'التشخيص',
+                risks: 'المخاطر المحتملة',
+                contractContent: 'أقر أنا الموقع أدناه بأن طبيب الأسنان قد شرح لي حالتي الصحية وخطة العلاج المقترحة بشكل واضح ومفهوم. كما تم إبلاغي بأن بعض الإجراءات العلاجية قد تتضمن مخاطر محتملة مثل: ألم أو تورم مؤقت، نزيف بسيط، حساسية مؤقتة للأسنان، احتمال الحاجة إلى علاج إضافي. وأفهم أن نتائج العلاج قد تختلف من شخص لآخر، ولا يمكن ضمان نتائج محددة بشكل مطلق. أتعهد بالالتزام بتعليمات الطبيب قبل وبعد العلاج، وإبلاغه بأي أمراض أو أدوية قد تؤثر على العلاج. كما أوافق على إجراء الفحص السريري، والأشعة السينية، والتخدير الموضعي، وأي إجراءات علاجية ضرورية لحالتي. وأقر بمسؤوليتي عن سداد تكاليف العلاج المتفق عليها مع العيادة.',
+                patientSignature: 'توقيع المريض',
+                doctorSignature: 'توقيع الطبيب',
+                dateLabel: 'التاريخ',
+                savePDF: 'حفظ PDF',
+                editAppointment: 'تعديل الموعد',
+                mainComplaint: 'الشكوى الرئيسية',
+                painDurationAfterTrigger: 'مدة استمرار الألم',
+                instantly: 'لحظي',
+                threeToFiveSeconds: 'من ٣ إلى ٥ ثواني',
+                fiveToThirtySeconds: 'من ٥ إلى ٣٠ ثانية',
+                minuteOrMore: 'دقيقة أو أكثر',
+                withSweets: 'مع السكريات',
+                deleteImage: 'حذف الصورة',
+                downloadPatientFilePDF: 'تحميل ملف المريض PDF',
+            },
+            en: {
+                save: 'Save',
+                cancel: 'Cancel',
+                confirm: 'Confirm',
+                delete: 'Delete',
+                edit: 'Edit',
+                back: 'Back',
+                next: 'Next',
+                previous: 'Previous',
+                close: 'Close',
+                darkMode: 'Dark Mode',
+                english: 'العربية',
+                deleteAccount: 'Delete Account',
+                resetApp: 'Reset App',
+                logout: 'Logout',
+                copyright: 'All rights reserved © 2025 DentFlow',
+                dashboard: 'Dashboard',
+                patients: 'Patients',
+                appointments: 'Appointments',
+                invoices: 'Invoices',
+                reports: 'Reports',
+                backup: 'Backup',
+                myProfile: 'My Profile',
+                myDoctors: 'My Doctors',
+                myAppointments: 'My Appointments',
+                currentPatient: 'Current Patient',
+                waitingPatients: 'Waiting Patients',
+                followupPatients: 'Follow-up Patients',
+                donePatients: 'Completed Patients',
+                startSession: 'Start Session',
+                viewFile: 'View File',
+                done: 'Done',
+                followup: 'Follow-up',
+                contract: 'Contract',
+                agree: 'I Agree',
+                disagree: 'I Disagree',
+                contractApproved: 'Contract approved and cannot be modified',
+                contractSaved: 'Contract saved',
+                modifyRequest: 'Modify Contract Request',
+                modifyRequestText: 'The doctor wants to modify the diagnosis or treatment plan. Do you agree?',
+                filter: 'Filter',
+                search: 'Search',
+                byDate: 'By Date',
+                byWeek: 'This Week',
+                byMonth: 'This Month',
+                byDiagnosis: 'By Diagnosis',
+                all: 'All',
+                passwordRequirements: 'Password must be at least 8 characters, contain a capital letter and a number',
+                uploadImages: 'Upload Images',
+                comment: 'Comment',
+                xray: 'X-ray Image',
+                caseImages: 'Case Images',
+                before: 'Before',
+                after: 'After',
+                general: 'General',
+                login: 'Login',
+                register: 'Register',
+                patient: 'Patient',
+                doctor: 'Doctor',
+                username: 'Username',
+                password: 'Password',
+                fullName: 'Full Name',
+                clinicName: 'Clinic Name',
+                confirmDeleteAccount: 'Confirm Delete Account',
+                deleteWarning: 'Are you sure? This action cannot be undone.',
+                deleteConfirm: 'Delete Permanently',
+                resetData: 'Reset All Data',
+                resetWarning: 'All users and appointments will be deleted. Are you sure?',
+                resetConfirm: 'Reset All',
+                renewSubscription: 'Renew Subscription',
+                subscriptionExpired: 'Your subscription has expired. Please renew to continue using the system.',
+                renewNow: 'Renew Subscription (1 month)',
+                changeProfilePic: 'Change Profile Picture',
+                setFollowup: 'Set Follow-up',
+                date: 'Date',
+                time: 'Time',
+                selectTooth: 'Select Tooth Location',
+                upperJaw: 'Upper Jaw',
+                lowerJaw: 'Lower Jaw',
+                clickTooth: 'Click on the tooth that hurts',
+                personalData: 'Personal Data',
+                medicalHistory: 'Medical History',
+                dentalHistory: 'Dental History',
+                reasonForVisit: 'Reason for Visit',
+                treatmentPlan: 'Treatment Plan',
+                faq: 'FAQ',
+                invalidCredentials: 'Invalid credentials',
+                wrongPassword: 'Wrong password',
+                accountCreated: 'Account created, please login now',
+                encryptionError: 'Encryption error',
+                enterCredentials: 'Enter username and password',
+                usernameExists: 'Username already exists',
+                profilePicUpdated: 'Profile picture updated',
+                accountDeleted: 'Account deleted',
+                dataCleared: 'All data cleared, reloading...',
+                today: 'Today',
+                thisWeek: 'This Week',
+                thisMonth: 'This Month',
+                noCurrentPatient: 'No current patient',
+                noWaitingPatients: 'No waiting patients',
+                noFollowupPatients: 'No follow-up patients',
+                noCompletedPatients: 'No completed patients',
+                turn: 'Turn',
+                view: 'View',
+                add: 'Add',
+                total: 'Total',
+                printReport: 'Print Report',
+                downloadBackup: 'Download Backup',
+                createInvoice: 'Create Invoice',
+                service: 'Service',
+                amount: 'Amount',
+                invoiceList: 'Invoices List',
+                upcomingAppointments: 'Upcoming Appointments',
+                addAppointment: 'Add Appointment',
+                patientName: 'Patient Name',
+                diagnosis: 'Diagnosis',
+                risks: 'Potential Risks',
+                contractContent: 'I, the undersigned, acknowledge that the dentist has clearly explained my health condition and proposed treatment plan. I have also been informed that some treatment procedures may involve potential risks such as: temporary pain or swelling, minor bleeding, temporary tooth sensitivity, possibility of additional treatment. I understand that treatment results may vary from person to person, and specific outcomes cannot be guaranteed. I undertake to follow the doctor\'s instructions before and after treatment, and to inform him of any diseases or medications that may affect the treatment. I also agree to undergo clinical examination, X-rays, local anesthesia, and any necessary treatment procedures for my condition. And I acknowledge my responsibility to pay the treatment costs agreed upon with the clinic.',
+                patientSignature: 'Patient Signature',
+                doctorSignature: 'Doctor Signature',
+                dateLabel: 'Date',
+                savePDF: 'Save PDF',
+                editAppointment: 'Edit Appointment',
+                mainComplaint: 'Main Complaint',
+                painDurationAfterTrigger: 'Pain Duration After Trigger',
+                instantly: 'Instantly',
+                threeToFiveSeconds: '3 to 5 seconds',
+                fiveToThirtySeconds: '5 to 30 seconds',
+                minuteOrMore: 'Minute or more',
+                withSweets: 'With Sweets',
+                deleteImage: 'Delete Image',
+                downloadPatientFilePDF: 'Download Patient File PDF',
+            }
+        };
+        let currentLang = 'ar';
+
+        function toggleLanguage() {
+            currentLang = currentLang === 'ar' ? 'en' : 'ar';
+            document.body.classList.toggle('english', currentLang === 'en');
+            document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
+            document.documentElement.lang = currentLang;
+            updateUILanguage();
+            document.getElementById('langAuthAr').classList.toggle('active', currentLang === 'ar');
+            document.getElementById('langAuthEn').classList.toggle('active', currentLang === 'en');
+            if (currentUser) {
+                if (currentUser.type === 'doctor') showDoctorView();
+                else showPatientView();
+            }
+        }
+
+        function updateUILanguage() {
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (translations[currentLang][key]) {
+                    el.textContent = translations[currentLang][key];
+                }
+            });
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                const key = el.getAttribute('data-i18n-placeholder');
+                if (translations[currentLang][key]) {
+                    el.placeholder = translations[currentLang][key];
+                }
+            });
+        }
+
+        document.getElementById('langAuthAr').addEventListener('click', () => { if (currentLang !== 'ar') toggleLanguage(); });
+        document.getElementById('langAuthEn').addEventListener('click', () => { if (currentLang !== 'en') toggleLanguage(); });
+        document.getElementById('langToggle').addEventListener('click', toggleLanguage);
+
+        function validatePassword(password) {
+            const regex = /^(?=.*[A-Z])(?=.*\d).{8,}$/;
+            return regex.test(password);
+        }
+
+        // -------------------- البيانات الأساسية --------------------
+        const SALT_ROUNDS = 10;
+        let users = JSON.parse(localStorage.getItem('dentflow_users')) || [];
+        let patientsData = JSON.parse(localStorage.getItem('dentflow_patientsData')) || {};
+        let queue = JSON.parse(localStorage.getItem('dentflow_queue')) || [];
+        let followups = JSON.parse(localStorage.getItem('dentflow_followups')) || [];
+        let relations = JSON.parse(localStorage.getItem('dentflow_relations')) || [];
+        let profilePics = JSON.parse(localStorage.getItem('dentflow_profilePics')) || {};
+        let appointments = JSON.parse(localStorage.getItem('dentflow_appointments')) || [];
+        let invoices = JSON.parse(localStorage.getItem('dentflow_invoices')) || [];
+        let subscriptions = JSON.parse(localStorage.getItem('dentflow_subscriptions')) || {};
+        let dentalCharts = JSON.parse(localStorage.getItem('dentflow_dentalCharts')) || {};
+        let patientImages = JSON.parse(localStorage.getItem('dentflow_patientImages')) || {};
+        let patientComments = JSON.parse(localStorage.getItem('dentflow_patientComments')) || {};
+        let contracts = JSON.parse(localStorage.getItem('dentflow_contracts')) || {};
+        let contractModifyRequests = JSON.parse(localStorage.getItem('dentflow_contractModifyRequests')) || {};
+
+        let currentUser = null;
+        let selectedPatientForFollowup = null;
+        let currentTabIndex = 0;
+        let lastQueueDate = localStorage.getItem('dentflow_lastQueueDate') || '';
+
+        function saveUsers() { localStorage.setItem('dentflow_users', JSON.stringify(users)); }
+        function savePatientsData() { localStorage.setItem('dentflow_patientsData', JSON.stringify(patientsData)); }
+        function saveQueue() { localStorage.setItem('dentflow_queue', JSON.stringify(queue)); }
+        function saveFollowups() { localStorage.setItem('dentflow_followups', JSON.stringify(followups)); }
+        function saveRelations() { localStorage.setItem('dentflow_relations', JSON.stringify(relations)); }
+        function saveProfilePics() { localStorage.setItem('dentflow_profilePics', JSON.stringify(profilePics)); }
+        function saveAppointments() { localStorage.setItem('dentflow_appointments', JSON.stringify(appointments)); }
+        function saveInvoices() { localStorage.setItem('dentflow_invoices', JSON.stringify(invoices)); }
+        function saveSubscriptions() { localStorage.setItem('dentflow_subscriptions', JSON.stringify(subscriptions)); }
+        function saveDentalCharts() { localStorage.setItem('dentflow_dentalCharts', JSON.stringify(dentalCharts)); }
+        function savePatientImages() { localStorage.setItem('dentflow_patientImages', JSON.stringify(patientImages)); }
+        function savePatientComments() { localStorage.setItem('dentflow_patientComments', JSON.stringify(patientComments)); }
+        function saveContracts() { localStorage.setItem('dentflow_contracts', JSON.stringify(contracts)); }
+        function saveContractModifyRequests() { localStorage.setItem('dentflow_contractModifyRequests', JSON.stringify(contractModifyRequests)); }
+
+        function showLoading() { document.getElementById('loadingOverlay').style.display = 'flex'; }
+        function hideLoading() { document.getElementById('loadingOverlay').style.display = 'none'; }
+        function showToast(msg) {
+            const t = document.getElementById('customToast');
+            document.getElementById('toastMessage').textContent = msg;
+            t.style.display = 'flex';
+            setTimeout(() => t.style.display = 'none', 2500);
+        }
+        function validatePhone(p) { return /^[0-9]{10,15}$/.test(p); }
+
+        // -------------------- عناصر DOM --------------------
+        const authWrapper = document.getElementById('authWrapper');
+        const mainApp = document.getElementById('mainApp');
+        const tabLogin = document.getElementById('tabLogin');
+        const tabRegister = document.getElementById('tabRegister');
+        const loginForm = document.getElementById('loginForm');
+        const registerForm = document.getElementById('registerForm');
+        const loginBtn = document.getElementById('loginBtn');
+        const registerBtn = document.getElementById('registerBtn');
+        const regType = document.getElementById('regType');
+        const doctorField = document.getElementById('doctorField');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebar = document.getElementById('sidebar');
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        const deleteAccountBtn = document.getElementById('deleteAccountBtn');
+        const resetAppBtn = document.getElementById('resetAppBtn');
+        const confirmDeleteBtn = document.getElementById('confirmDeleteAccount');
+        const confirmResetBtn = document.getElementById('confirmResetApp');
+        const uploadPicModal = new bootstrap.Modal(document.getElementById('uploadPicModal'));
+        const followupModal = new bootstrap.Modal(document.getElementById('followupModal'));
+        const toothModal = new bootstrap.Modal(document.getElementById('toothModal'));
+        const deleteAccountModal = new bootstrap.Modal(document.getElementById('deleteAccountModal'));
+        const resetAppModal = new bootstrap.Modal(document.getElementById('resetAppModal'));
+        const subscriptionModal = new bootstrap.Modal(document.getElementById('subscriptionModal'));
+        const contractViewModal = new bootstrap.Modal(document.getElementById('contractViewModal'));
+        const caseImagesModal = new bootstrap.Modal(document.getElementById('caseImagesModal'));
+        const contractModifyRequestModal = new bootstrap.Modal(document.getElementById('contractModifyRequestModal'));
+
+        // -------------------- أحداث تسجيل الدخول والتسجيل --------------------
+        tabLogin.addEventListener('click', () => {
+            tabLogin.classList.add('active');
+            tabRegister.classList.remove('active');
+            loginForm.classList.add('active');
+            registerForm.classList.remove('active');
+        });
+        tabRegister.addEventListener('click', () => {
+            tabRegister.classList.add('active');
+            tabLogin.classList.remove('active');
+            registerForm.classList.add('active');
+            loginForm.classList.remove('active');
+        });
+        regType.addEventListener('change', () => {
+            doctorField.style.display = regType.value === 'doctor' ? 'block' : 'none';
+        });
+
+        registerBtn.addEventListener('click', async () => {
+            const type = regType.value;
+            const name = document.getElementById('regName').value.trim();
+            const username = document.getElementById('regUsername').value.trim();
+            const password = document.getElementById('regPassword').value.trim();
+            const clinic = document.getElementById('regClinic')?.value.trim() || '';
+
+            if (!name || !username || !password) {
+                alert(translations[currentLang].passwordRequirements);
+                return;
+            }
+            if (!validatePassword(password)) {
+                alert(translations[currentLang].passwordRequirements);
+                return;
+            }
+            if (users.find(u => u.username === username)) {
+                alert(translations[currentLang].usernameExists);
+                return;
+            }
+            showLoading();
+            try {
+                const hashed = await bcrypt.hash(password, SALT_ROUNDS);
+                users.push({
+                    id: Date.now().toString(),
+                    username,
+                    password: hashed,
+                    name,
+                    type,
+                    clinic: type === 'doctor' ? clinic : ''
+                });
+                saveUsers();
+                hideLoading();
+                alert(translations[currentLang].accountCreated);
+                tabLogin.click();
+            } catch (e) {
+                hideLoading();
+                alert(translations[currentLang].encryptionError);
+            }
+        });
+
+        loginBtn.addEventListener('click', async () => {
+            const type = document.getElementById('loginType').value;
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value.trim();
+            document.getElementById('loginUsernameError').innerText = '';
+            document.getElementById('loginPasswordError').innerText = '';
+
+            if (!username || !password) {
+                if (!username) document.getElementById('loginUsernameError').innerText = translations[currentLang].enterCredentials;
+                if (!password) document.getElementById('loginPasswordError').innerText = translations[currentLang].enterCredentials;
+                return;
+            }
+            const user = users.find(u => u.username === username && u.type === type);
+            if (!user) {
+                document.getElementById('loginUsernameError').innerText = translations[currentLang].invalidCredentials;
+                return;
+            }
+            showLoading();
+            try {
+                if (await bcrypt.compare(password, user.password)) {
+                    currentUser = user;
+                    localStorage.setItem('dentflow_currentUser', JSON.stringify(user));
+                    hideLoading();
+                    if (user.type === 'doctor') {
+                        checkSubscription();
+                    } else {
+                        showMainApp();
+                    }
+                } else {
+                    hideLoading();
+                    document.getElementById('loginPasswordError').innerText = translations[currentLang].wrongPassword;
+                }
+            } catch (e) {
+                hideLoading();
+                alert(translations[currentLang].error || 'خطأ');
+            }
+        });
+
+        logoutBtn.addEventListener('click', () => {
+            currentUser = null;
+            localStorage.removeItem('dentflow_currentUser');
+            authWrapper.style.display = 'flex';
+            mainApp.style.display = 'none';
+            document.body.classList.remove('in-app');
+        });
+
+        deleteAccountBtn.addEventListener('click', () => deleteAccountModal.show());
+        confirmDeleteBtn.addEventListener('click', () => {
+            if (!currentUser) return;
+            const uid = currentUser.id;
+            users = users.filter(u => u.id !== uid);
+            delete patientsData[uid];
+            queue = queue.filter(q => q.patientId !== uid && q.doctorId !== uid);
+            followups = followups.filter(f => f.patientId !== uid && f.doctorId !== uid);
+            relations = relations.filter(r => r.patientId !== uid && r.doctorId !== uid);
+            delete profilePics[uid];
+            appointments = appointments.filter(a => a.patientId !== uid && a.doctorId !== uid);
+            invoices = invoices.filter(i => i.patientId !== uid && i.doctorId !== uid);
+            delete dentalCharts[uid];
+            delete patientImages[uid];
+            delete patientComments[uid];
+            delete contracts[uid];
+            saveUsers(); savePatientsData(); saveQueue(); saveFollowups(); saveRelations(); saveProfilePics();
+            saveAppointments(); saveInvoices(); saveDentalCharts(); savePatientImages(); savePatientComments(); saveContracts();
+            deleteAccountModal.hide();
+            showToast(translations[currentLang].accountDeleted);
+            logoutBtn.click();
+        });
+
+        resetAppBtn.addEventListener('click', () => resetAppModal.show());
+        confirmResetBtn.addEventListener('click', () => {
+            localStorage.clear();
+            resetAppModal.hide();
+            showToast(translations[currentLang].dataCleared);
+            setTimeout(() => location.reload(), 1500);
+        });
+
+        menuToggle.addEventListener('click', () => sidebar.classList.toggle('show'));
+
+        darkModeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+            const isDark = document.body.classList.contains('dark-mode');
+            localStorage.setItem('dentflow_darkMode', isDark);
+            darkModeToggle.innerHTML = isDark ? '<i class="fas fa-sun"></i> ' + (currentLang === 'ar' ? 'الوضع النهاري' : 'Light Mode') : '<i class="fas fa-moon"></i> ' + (currentLang === 'ar' ? 'الوضع الليلي' : 'Dark Mode');
+        });
+        if (localStorage.getItem('dentflow_darkMode') === 'true') {
+            document.body.classList.add('dark-mode');
+            darkModeToggle.innerHTML = '<i class="fas fa-sun"></i> ' + (currentLang === 'ar' ? 'الوضع النهاري' : 'Light Mode');
+        }
+
+        document.getElementById('saveProfilePic').addEventListener('click', () => {
+            const file = document.getElementById('profilePicUpload').files[0];
+            if (file) {
+                showLoading();
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    profilePics[currentUser.id] = e.target.result;
+                    saveProfilePics();
+                    updateSidebarUserInfo();
+                    uploadPicModal.hide();
+                    hideLoading();
+                    showToast(translations[currentLang].profilePicUpdated);
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // -------------------- نظام الاشتراك --------------------
+        function checkSubscription() {
+            let sub = subscriptions[currentUser.id];
+            if (!sub) {
+                subscriptionModal.show();
+                return;
+            }
+            let today = new Date();
+            let expiry = new Date(sub.expiry);
+            if (today > expiry) {
+                subscriptionModal.show();
+            } else {
+                showMainApp();
+            }
+        }
+
+        window.startSubscription = function() {
+            let expiry = new Date();
+            expiry.setMonth(expiry.getMonth() + 1);
+            subscriptions[currentUser.id] = {
+                plan: "basic",
+                expiry: expiry.toISOString()
+            };
+            saveSubscriptions();
+            subscriptionModal.hide();
+            showMainApp();
+        };
+
+        // -------------------- عرض التطبيق الرئيسي --------------------
+        function showMainApp() {
+            authWrapper.style.display = 'none';
+            mainApp.style.display = 'block';
+            document.body.classList.add('in-app');
+            updateSidebarUserInfo();
+            buildSidebar();
+            if (currentUser.type === 'doctor') showDoctorView();
+            else showPatientView();
+            updateUILanguage();
+            window.scrollTo(0, 0);
+        }
+
+        function updateSidebarUserInfo() {
+            const pic = profilePics[currentUser.id] || 'https://via.placeholder.com/80';
+            document.getElementById('sidebarUserInfo').innerHTML = `
+                <img src="${pic}" class="profile-pic" onclick="uploadPicModal.show()">
+                <div><strong>${currentUser.name}</strong></div>
+                <div>${currentUser.type === 'doctor' ? (currentLang === 'ar' ? 'طبيب' : 'Doctor') : (currentLang === 'ar' ? 'مريض' : 'Patient')}</div>
+            `;
+        }
+
+        function buildSidebar() {
+            const nav = document.getElementById('v-pills-tab');
+            if (currentUser.type === 'doctor') {
+                nav.innerHTML = `
+                    <button class="nav-link active" data-bs-toggle="pill" data-bs-target="#dashboard"><i class="fas fa-chart-pie"></i> <span data-i18n="dashboard">لوحة التحكم</span></button>
+                    <button class="nav-link" data-bs-toggle="pill" data-bs-target="#patients"><i class="fas fa-users"></i> <span data-i18n="patients">المرضى</span></button>
+                    <button class="nav-link" data-bs-toggle="pill" data-bs-target="#appointmentsMgmt"><i class="fas fa-calendar-alt"></i> <span data-i18n="appointments">المواعيد</span></button>
+                    <button class="nav-link" data-bs-toggle="pill" data-bs-target="#invoices"><i class="fas fa-file-invoice"></i> <span data-i18n="invoices">الفواتير</span></button>
+                    <button class="nav-link" data-bs-toggle="pill" data-bs-target="#reports"><i class="fas fa-chart-bar"></i> <span data-i18n="reports">التقارير</span></button>
+                    <button class="nav-link" data-bs-toggle="pill" data-bs-target="#backup"><i class="fas fa-database"></i> <span data-i18n="backup">النسخ الاحتياطي</span></button>
+                `;
+            } else {
+                nav.innerHTML = `
+                    <button class="nav-link active" data-bs-toggle="pill" data-bs-target="#profile"><i class="fas fa-user-injured"></i> <span data-i18n="myProfile">ملفي الطبي</span></button>
+                    <button class="nav-link" data-bs-toggle="pill" data-bs-target="#myDoctors"><i class="fas fa-user-md"></i> <span data-i18n="myDoctors">أطبائي</span></button>
+                    <button class="nav-link" data-bs-toggle="pill" data-bs-target="#appointments"><i class="fas fa-calendar-alt"></i> <span data-i18n="myAppointments">مواعيدي</span></button>
+                `;
+            }
+            document.querySelector('#v-pills-tab .nav-link').click();
+        }
+
+        // ================== دوال المريض ==================
+        function showPatientView() {
+            // ترتيب التبويبات: البيانات الشخصية، التاريخ الطبي، التاريخ السني، سبب الزيارة، المتابعة، خطة العلاج، الأسئلة الشائعة، العقد (في الآخر)
+            const tabs = [
+                translations[currentLang].personalData,
+                translations[currentLang].medicalHistory,
+                translations[currentLang].dentalHistory,
+                translations[currentLang].reasonForVisit,
+                translations[currentLang].followup,
+                translations[currentLang].treatmentPlan,
+                translations[currentLang].faq,
+                translations[currentLang].contract
+            ];
+            const ids = ['personal','medical','dental','reason','followup','treatment','faq','contract'];
+            let th = '<div class="horizontal-tabs">';
+            tabs.forEach((n,i)=> th+=`<button class="horizontal-tab ${i===0?'active':''}" data-tab="${ids[i]}">${n}</button>`);
+            th+='</div>';
+            let ch = ids.map(id=>`<div class="tab-pane-custom ${id==='personal'?'active':''}" id="tab-${id}"></div>`).join('');
+            document.getElementById('v-pills-tabContent').innerHTML = `
+                <div class="tab-pane active" id="profile">
+                    <h2 class="page-title">${translations[currentLang].myProfile} <i class="fas fa-notes-medical"></i></h2>
+                    ${th}${ch}
+                    <div class="navigation-buttons">
+                        <button class="btn btn-outline-accent" id="prevTab" disabled>${translations[currentLang].previous}</button>
+                        <button class="btn btn-primary" id="nextTab">${translations[currentLang].next}</button>
+                    </div>
+                    <div id="turnNumberDisplay" style="display:none" class="alert alert-success mt-3 text-center">
+                        <strong>${translations[currentLang].turn}: <span id="turnNumberValue"></span></strong>
+                    </div>
+                    <button class="btn btn-info mt-3" onclick="downloadPatientFilePDF()">${translations[currentLang].downloadPatientFilePDF}</button>
+                </div>
+                <div class="tab-pane" id="myDoctors"><h2 class="page-title">${translations[currentLang].myDoctors} <i class="fas fa-user-md"></i></h2><div class="card"><div class="card-body" id="myDoctorsList"></div></div></div>
+                <div class="tab-pane" id="appointments"><h2 class="page-title">${translations[currentLang].myAppointments} <i class="fas fa-calendar-check"></i></h2><div class="card"><div class="card-body" id="patientAppointments"></div></div></div>
+            `;
+            loadPersonalTab();
+            loadMedicalTab();
+            loadDentalTab();
+            loadReasonTab();
+            loadFollowupTab();
+            loadTreatmentTab();
+            loadFaqTab();
+            loadContractTab();
+
+            document.querySelectorAll('.horizontal-tab').forEach((btn,i)=>{
+                btn.addEventListener('click',function(){
+                    document.querySelectorAll('.horizontal-tab').forEach(b=>b.classList.remove('active'));
+                    this.classList.add('active');
+                    document.querySelectorAll('.tab-pane-custom').forEach(p=>p.classList.remove('active'));
+                    document.getElementById(`tab-${this.dataset.tab}`).classList.add('active');
+                    currentTabIndex = i;
+                    document.getElementById('prevTab').disabled = currentTabIndex===0;
+                    document.getElementById('nextTab').textContent = currentTabIndex===tabs.length-1 ? (currentLang==='ar'?'حفظ الكل':'Save All') : (currentLang==='ar'?'التالي':'Next');
+                    window.scrollTo(0, 0);
+                });
+            });
+            document.getElementById('prevTab').addEventListener('click',()=>{
+                if(currentTabIndex>0){
+                    currentTabIndex--;
+                    document.querySelector(`.horizontal-tab[data-tab="${ids[currentTabIndex]}"]`).click();
+                }
+            });
+            document.getElementById('nextTab').addEventListener('click',()=>{
+                if(currentTabIndex<tabs.length-1){
+                    currentTabIndex++;
+                    document.querySelector(`.horizontal-tab[data-tab="${ids[currentTabIndex]}"]`).click();
+                } else {
+                    showLoading();
+                    document.querySelectorAll('.save-tab-btn:not(#saveContractDiagnosis)').forEach(b=>b.click());
+                    hideLoading();
+                    showToast(currentLang === 'ar' ? 'تم حفظ جميع البيانات' : 'All data saved');
+                    const today = new Date().toLocaleDateString('en-CA');
+                    if (lastQueueDate !== today) {
+                        lastQueueDate = today;
+                        localStorage.setItem('dentflow_lastQueueDate', today);
+                    }
+                    const taken = queue.filter(q=>q.date===today).map(q=>q.turnNumber);
+                    let newTurn=1; while(taken.includes(newTurn)) newTurn++;
+                    queue.push({patientId:currentUser.id, turnNumber:newTurn, date:today, status:'waiting'});
+                    saveQueue();
+                    document.getElementById('turnNumberValue').textContent = newTurn;
+                    document.getElementById('turnNumberDisplay').style.display = 'block';
+                    document.getElementById('nextTab').disabled = true;
+                }
+            });
+        }
+
+        // دوال التحميل
+        function loadPersonalTab() {
+            const c = document.getElementById('tab-personal');
+            const saved = patientsData[currentUser.id]?.personal || {};
+            const doctors = users.filter(u => u.type === 'doctor');
+            let opts = '<option value="">' + (currentLang === 'ar' ? 'اختر العيادة' : 'Select clinic') + '</option>';
+            doctors.forEach(d => opts += `<option value="${d.id}" ${saved.clinicId === d.id ? 'selected' : ''}>${d.name} - ${d.clinic || ''}</option>`);
+            c.innerHTML = `
+                <div class="card">
+                    <div class="card-header"><i class="fas fa-id-card"></i> ${translations[currentLang].personalData}</div>
+                    <div class="card-body">
+                        <div class="row g-4">
+                            <div class="col-md-12 text-center mb-3">
+                                <img src="${profilePics[currentUser.id] || 'https://via.placeholder.com/100'}" class="rounded-circle" style="width:100px;height:100px;object-fit:cover;border:3px solid #00cec9;cursor:pointer;" onclick="uploadPicModal.show()">
+                                <p class="mt-2"><small>${currentLang === 'ar' ? 'انقر لتغيير الصورة' : 'Click to change picture'}</small></p>
+                            </div>
+                            <div class="col-md-6"><label class="form-label">${currentLang === 'ar' ? 'الاسم الكامل' : 'Full Name'}</label><input type="text" class="form-control" value="${currentUser.name}" readonly></div>
+                            <div class="col-md-3"><label class="form-label">${currentLang === 'ar' ? 'العمر' : 'Age'}</label><input type="number" class="form-control" id="patientAge" value="${saved.age || ''}" min="0" max="120"></div>
+                            <div class="col-md-3"><label class="form-label">${currentLang === 'ar' ? 'النوع' : 'Gender'}</label><select class="form-select" id="patientGender"><option ${saved.gender === (currentLang==='ar'?'ذكر':'Male') ? 'selected' : ''}>${currentLang==='ar'?'ذكر':'Male'}</option><option ${saved.gender === (currentLang==='ar'?'أنثى':'Female') ? 'selected' : ''}>${currentLang==='ar'?'أنثى':'Female'}</option></select></div>
+                            <div class="col-md-6"><label class="form-label">${currentLang === 'ar' ? 'المهنة' : 'Occupation'}</label><input type="text" class="form-control" id="patientJob" value="${saved.job || ''}"></div>
+                            <div class="col-md-6"><label class="form-label">${currentLang === 'ar' ? 'العنوان' : 'Address'}</label><input type="text" class="form-control" id="patientAddress" value="${saved.address || ''}"></div>
+                            <div class="col-md-6"><label class="form-label">${currentLang === 'ar' ? 'رقم الهاتف' : 'Phone'}</label><input type="tel" class="form-control" id="patientPhone" value="${saved.phone || ''}" pattern="[0-9]{10,15}"></div>
+                            <div class="col-md-6"><label class="form-label">${currentLang === 'ar' ? 'العيادة المتابع معها' : 'Clinic'}</label><select class="form-select custom-select" id="patientClinic">${opts}</select></div>
+                        </div>
+                        <button class="btn btn-primary mt-3 save-tab-btn" id="savePersonal">${translations[currentLang].save}</button>
+                    </div>
+                </div>
+            `;
+            document.getElementById('savePersonal').addEventListener('click', () => {
+                const phone = document.getElementById('patientPhone').value;
+                if (phone && !validatePhone(phone)) { alert(currentLang === 'ar' ? 'رقم الهاتف غير صالح' : 'Invalid phone number'); return; }
+                const personal = {
+                    age: document.getElementById('patientAge').value,
+                    gender: document.getElementById('patientGender').value,
+                    job: document.getElementById('patientJob').value,
+                    address: document.getElementById('patientAddress').value,
+                    phone: phone,
+                    clinicId: document.getElementById('patientClinic').value
+                };
+                if (!patientsData[currentUser.id]) patientsData[currentUser.id] = {};
+                patientsData[currentUser.id].personal = personal;
+                savePatientsData();
+                if (personal.clinicId && !relations.find(r => r.patientId === currentUser.id && r.doctorId === personal.clinicId)) {
+                    relations.push({ patientId: currentUser.id, doctorId: personal.clinicId });
+                    saveRelations();
+                }
+                if (document.getElementById('myDoctorsList')) renderMyDoctors();
+                showToast(currentLang === 'ar' ? 'تم حفظ البيانات الشخصية' : 'Personal data saved');
+            });
+        }
+
+        function loadMedicalTab() {
+            const c = document.getElementById('tab-medical');
+            const s = patientsData[currentUser.id]?.medical || {};
+            c.innerHTML = `
+                <div class="card">
+                    <div class="card-header"><i class="fas fa-heartbeat"></i> ${translations[currentLang].medicalHistory}</div>
+                    <div class="card-body">
+                        <div class="question-item">
+                            <label class="form-label">${currentLang === 'ar' ? 'هل تعاني أو عانيت سابقًا من أي من الأمراض التالية؟' : 'Do you suffer or have you suffered from any of the following diseases?'}</label>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-check"><input class="form-check-input" type="checkbox" id="diseaseHeart" ${s.heart ? 'checked' : ''}><label class="form-check-label">${currentLang==='ar'?'أمراض القلب':'Heart disease'}</label></div>
+                                    <div class="form-check"><input class="form-check-input" type="checkbox" id="diseasePressure" ${s.pressure ? 'checked' : ''}><label>${currentLang==='ar'?'ارتفاع ضغط الدم':'High blood pressure'}</label></div>
+                                    <div class="form-check"><input class="form-check-input" type="checkbox" id="diseaseDiabetes" ${s.diabetes ? 'checked' : ''}><label>${currentLang==='ar'?'مرض السكري':'Diabetes'}</label></div>
+                                    <div class="form-check"><input class="form-check-input" type="checkbox" id="diseaseAsthma" ${s.asthma ? 'checked' : ''}><label>${currentLang==='ar'?'الربو':'Asthma'}</label></div>
+                                    <div class="form-check"><input class="form-check-input" type="checkbox" id="diseaseLiver" ${s.liver ? 'checked' : ''}><label>${currentLang==='ar'?'أمراض الكبد':'Liver disease'}</label></div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check"><input class="form-check-input" type="checkbox" id="diseaseKidney" ${s.kidney ? 'checked' : ''}><label>${currentLang==='ar'?'أمراض الكلى':'Kidney disease'}</label></div>
+                                    <div class="form-check"><input class="form-check-input" type="checkbox" id="diseaseEpilepsy" ${s.epilepsy ? 'checked' : ''}><label>${currentLang==='ar'?'الصرع':'Epilepsy'}</label></div>
+                                    <div class="form-check"><input class="form-check-input" type="checkbox" id="diseaseThyroid" ${s.thyroid ? 'checked' : ''}><label>${currentLang==='ar'?'اضطرابات الغدة الدرقية':'Thyroid disorders'}</label></div>
+                                    <div class="form-check"><input class="form-check-input" type="checkbox" id="diseaseHepatitis" ${s.hepatitis ? 'checked' : ''}><label>${currentLang==='ar'?'التهاب الكبد الوبائي':'Hepatitis'}</label></div>
+                                    <div class="form-check"><input class="form-check-input" type="checkbox" id="diseaseBleeding" ${s.bleeding ? 'checked' : ''}><label>${currentLang==='ar'?'اضطرابات النزيف':'Bleeding disorders'}</label></div>
+                                </div>
+                            </div>
+                            <div class="mt-2">
+                                <label class="form-label">${currentLang === 'ar' ? 'أمراض أخرى:' : 'Other diseases:'}</label>
+                                <input type="text" class="form-control" id="otherDiseases" value="${s.otherDiseases || ''}">
+                            </div>
+                        </div>
+                        <div class="question-item">
+                            <label class="form-label">${currentLang === 'ar' ? 'هل تتناول أي أدوية حاليًا؟' : 'Do you take any medications currently?'}</label>
+                            <div class="d-flex gap-4">
+                                <div class="form-check"><input class="form-check-input" type="radio" name="meds" value="yes" ${s.meds === 'yes' ? 'checked' : ''}><label>${currentLang==='ar'?'نعم':'Yes'}</label></div>
+                                <div class="form-check"><input class="form-check-input" type="radio" name="meds" value="no" ${s.meds === 'no' ? 'checked' : ''}><label>${currentLang==='ar'?'لا':'No'}</label></div>
+                            </div>
+                            <div id="medsDetailsDiv" style="${s.meds === 'yes' ? 'display:block' : 'display:none'}; margin-top:10px;">
+                                <input type="text" class="form-control" id="medsDetails" placeholder="${currentLang==='ar'?'اذكر الأدوية':'List medications'}" value="${s.medsDetails || ''}">
+                            </div>
+                        </div>
+                        <div class="question-item">
+                            <label class="form-label">${currentLang === 'ar' ? 'هل لديك حساسية من أدوية أو مواد طبية؟' : 'Do you have any allergies to medications or medical materials?'}</label>
+                            <div class="d-flex gap-4">
+                                <div class="form-check"><input class="form-check-input" type="radio" name="allergy" value="yes" ${s.allergy === 'yes' ? 'checked' : ''}><label>${currentLang==='ar'?'نعم':'Yes'}</label></div>
+                                <div class="form-check"><input class="form-check-input" type="radio" name="allergy" value="no" ${s.allergy === 'no' ? 'checked' : ''}><label>${currentLang==='ar'?'لا':'No'}</label></div>
+                            </div>
+                            <div id="allergyDetailsDiv" style="${s.allergy === 'yes' ? 'display:block' : 'display:none'}; margin-top:10px;">
+                                <input type="text" class="form-control" id="allergyDetails" placeholder="${currentLang==='ar'?'اذكر المواد المسببة':'List allergens'}" value="${s.allergyDetails || ''}">
+                            </div>
+                        </div>
+                        <div class="question-item">
+                            <label class="form-label">${currentLang === 'ar' ? 'هل سبق لك دخول المستشفى أو إجراء عملية جراحية؟' : 'Have you ever been hospitalized or had surgery?'}</label>
+                            <div class="d-flex gap-4">
+                                <div class="form-check"><input class="form-check-input" type="radio" name="surgery" value="yes" ${s.surgery === 'yes' ? 'checked' : ''}><label>${currentLang==='ar'?'نعم':'Yes'}</label></div>
+                                <div class="form-check"><input class="form-check-input" type="radio" name="surgery" value="no" ${s.surgery === 'no' ? 'checked' : ''}><label>${currentLang==='ar'?'لا':'No'}</label></div>
+                            </div>
+                            <div id="surgeryDetailsDiv" style="${s.surgery === 'yes' ? 'display:block' : 'display:none'}; margin-top:10px;">
+                                <input type="text" class="form-control" id="surgeryDetails" placeholder="${currentLang==='ar'?'اشرح':'Explain'}" value="${s.surgeryDetails || ''}">
+                            </div>
+                        </div>
+                        <div class="question-item">
+                            <label class="form-label">${currentLang === 'ar' ? 'للنساء: هل يوجد حمل حاليًا؟' : 'For women: Are you currently pregnant?'}</label>
+                            <div class="d-flex gap-4">
+                                <div class="form-check"><input class="form-check-input" type="radio" name="pregnant" value="yes" ${s.pregnant === 'yes' ? 'checked' : ''}><label>${currentLang==='ar'?'نعم':'Yes'}</label></div>
+                                <div class="form-check"><input class="form-check-input" type="radio" name="pregnant" value="no" ${s.pregnant === 'no' ? 'checked' : ''}><label>${currentLang==='ar'?'لا':'No'}</label></div>
+                                <div class="form-check"><input class="form-check-input" type="radio" name="pregnant" value="na" ${s.pregnant === 'na' ? 'checked' : ''}><label>${currentLang==='ar'?'لا ينطبق':'N/A'}</label></div>
+                            </div>
+                            <div id="pregnancyWeeksDiv" style="${s.pregnant === 'yes' ? 'display:block' : 'display:none'}; margin-top:10px;">
+                                <label class="form-label">${currentLang==='ar'?'عدد أسابيع الحمل:':'Weeks of pregnancy:'}</label>
+                                <input type="number" class="form-control" id="pregnancyWeeks" min="1" max="42" value="${s.pregnancyWeeks || ''}">
+                            </div>
+                        </div>
+                        <button class="btn btn-primary save-tab-btn" id="saveMedical">${translations[currentLang].save}</button>
+                    </div>
+                </div>
+            `;
+            document.querySelectorAll('input[name="meds"]').forEach(r => r.addEventListener('change', function () {
+                document.getElementById('medsDetailsDiv').style.display = this.value === 'yes' ? 'block' : 'none';
+            }));
+            document.querySelectorAll('input[name="allergy"]').forEach(r => r.addEventListener('change', function () {
+                document.getElementById('allergyDetailsDiv').style.display = this.value === 'yes' ? 'block' : 'none';
+            }));
+            document.querySelectorAll('input[name="surgery"]').forEach(r => r.addEventListener('change', function () {
+                document.getElementById('surgeryDetailsDiv').style.display = this.value === 'yes' ? 'block' : 'none';
+            }));
+            document.querySelectorAll('input[name="pregnant"]').forEach(r => r.addEventListener('change', function () {
+                document.getElementById('pregnancyWeeksDiv').style.display = this.value === 'yes' ? 'block' : 'none';
+            }));
+            document.getElementById('saveMedical').addEventListener('click', () => {
+                const medical = {
+                    heart: document.getElementById('diseaseHeart').checked,
+                    pressure: document.getElementById('diseasePressure').checked,
+                    diabetes: document.getElementById('diseaseDiabetes').checked,
+                    asthma: document.getElementById('diseaseAsthma').checked,
+                    liver: document.getElementById('diseaseLiver').checked,
+                    kidney: document.getElementById('diseaseKidney').checked,
+                    epilepsy: document.getElementById('diseaseEpilepsy').checked,
+                    thyroid: document.getElementById('diseaseThyroid').checked,
+                    hepatitis: document.getElementById('diseaseHepatitis').checked,
+                    bleeding: document.getElementById('diseaseBleeding').checked,
+                    otherDiseases: document.getElementById('otherDiseases').value,
+                    meds: document.querySelector('input[name="meds"]:checked')?.value,
+                    medsDetails: document.getElementById('medsDetails').value,
+                    allergy: document.querySelector('input[name="allergy"]:checked')?.value,
+                    allergyDetails: document.getElementById('allergyDetails').value,
+                    surgery: document.querySelector('input[name="surgery"]:checked')?.value,
+                    surgeryDetails: document.getElementById('surgeryDetails').value,
+                    pregnant: document.querySelector('input[name="pregnant"]:checked')?.value,
+                    pregnancyWeeks: document.getElementById('pregnancyWeeks').value
+                };
+                if (!patientsData[currentUser.id]) patientsData[currentUser.id] = {};
+                patientsData[currentUser.id].medical = medical;
+                savePatientsData();
+                showToast(currentLang === 'ar' ? 'تم حفظ التاريخ الطبي' : 'Medical history saved');
+            });
+        }
+
+        function loadDentalTab() {
+            const c = document.getElementById('tab-dental');
+            const s = patientsData[currentUser.id]?.dental || {};
+            c.innerHTML = `
+                <div class="card">
+                    <div class="card-header"><i class="fas fa-tooth"></i> ${translations[currentLang].dentalHistory}</div>
+                    <div class="card-body">
+                        <div class="question-item">
+                            <label class="form-label">${currentLang === 'ar' ? 'متى كانت آخر زيارة لطبيب الأسنان؟' : 'When was your last dental visit?'}</label>
+                            <input type="text" class="form-control" id="lastVisit" value="${s.lastVisit || ''}">
+                        </div>
+                        <div class="question-item">
+                            <label class="form-label">${currentLang === 'ar' ? 'هل تعاني من أي من الأعراض التالية؟' : 'Do you have any of the following symptoms?'}</label>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-check"><input class="form-check-input" type="checkbox" id="symptomPain" ${s.symptomPain ? 'checked' : ''}><label>${currentLang==='ar'?'ألم في الأسنان':'Tooth pain'}</label></div>
+                                    <div class="form-check"><input class="form-check-input" type="checkbox" id="symptomBleeding" ${s.symptomBleeding ? 'checked' : ''}><label>${currentLang==='ar'?'نزيف في اللثة':'Bleeding gums'}</label></div>
+                                    <div class="form-check"><input class="form-check-input" type="checkbox" id="symptomBadBreath" ${s.symptomBadBreath ? 'checked' : ''}><label>${currentLang==='ar'?'رائحة فم كريهة':'Bad breath'}</label></div>
+                                    <div class="form-check"><input class="form-check-input" type="checkbox" id="symptomSensitivity" ${s.symptomSensitivity ? 'checked' : ''}><label>${currentLang==='ar'?'حساسية من البارد أو الساخن':'Sensitivity to hot/cold'}</label></div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check"><input class="form-check-input" type="checkbox" id="symptomChewing" ${s.symptomChewing ? 'checked' : ''}><label>${currentLang==='ar'?'صعوبة في المضغ':'Difficulty chewing'}</label></div>
+                                    <div class="form-check"><input class="form-check-input" type="checkbox" id="symptomJaw" ${s.symptomJaw ? 'checked' : ''}><label>${currentLang==='ar'?'ألم في مفصل الفك':'Jaw pain'}</label></div>
+                                    <div class="form-check"><input class="form-check-input" type="checkbox" id="symptomGrinding" ${s.symptomGrinding ? 'checked' : ''}><label>${currentLang==='ar'?'صرير الأسنان':'Teeth grinding'}</label></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="question-item">
+                            <label class="form-label">${currentLang === 'ar' ? 'هل تنزف لثتك أثناء تنظيف الأسنان؟' : 'Do your gums bleed when brushing?'}</label>
+                            <div class="d-flex gap-4">
+                                <div class="form-check"><input class="form-check-input" type="radio" name="gumBleed" value="yes" ${s.gumBleed === 'yes' ? 'checked' : ''}><label>${currentLang==='ar'?'نعم':'Yes'}</label></div>
+                                <div class="form-check"><input class="form-check-input" type="radio" name="gumBleed" value="no" ${s.gumBleed === 'no' ? 'checked' : ''}><label>${currentLang==='ar'?'لا':'No'}</label></div>
+                            </div>
+                        </div>
+                        <div class="question-item">
+                            <label class="form-label">${currentLang === 'ar' ? 'هل سبق لك إجراء أي من العلاجات التالية؟' : 'Have you ever had any of the following treatments?'}</label>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-check"><input class="form-check-input" type="checkbox" id="prevOrtho" ${s.prevOrtho ? 'checked' : ''}><label>${currentLang==='ar'?'تقويم الأسنان':'Orthodontics'}</label></div>
+                                    <div class="form-check"><input class="form-check-input" type="checkbox" id="prevRoot" ${s.prevRoot ? 'checked' : ''}><label>${currentLang==='ar'?'حشو عصب':'Root canal'}</label></div>
+                                    <div class="form-check"><input class="form-check-input" type="checkbox" id="prevImplant" ${s.prevImplant ? 'checked' : ''}><label>${currentLang==='ar'?'زراعة الأسنان':'Dental implant'}</label></div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check"><input class="form-check-input" type="checkbox" id="prevCrown" ${s.prevCrown ? 'checked' : ''}><label>${currentLang==='ar'?'تيجان أو جسور':'Crowns/bridges'}</label></div>
+                                    <div class="form-check"><input class="form-check-input" type="checkbox" id="prevDenture" ${s.prevDenture ? 'checked' : ''}><label>${currentLang==='ar'?'أطقم أسنان':'Dentures'}</label></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="question-item">
+                            <label class="form-label">${currentLang === 'ar' ? 'سبب الزيارة اليوم (وصف مختصر):' : 'Reason for today\'s visit (brief description):'}</label>
+                            <textarea class="form-control" id="visitReason" rows="3">${s.visitReason || ''}</textarea>
+                        </div>
+                        <button class="btn btn-primary save-tab-btn" id="saveDental">${translations[currentLang].save}</button>
+                    </div>
+                </div>
+            `;
+            document.getElementById('saveDental').addEventListener('click', () => {
+                const dental = {
+                    lastVisit: document.getElementById('lastVisit').value,
+                    symptomPain: document.getElementById('symptomPain').checked,
+                    symptomBleeding: document.getElementById('symptomBleeding').checked,
+                    symptomBadBreath: document.getElementById('symptomBadBreath').checked,
+                    symptomSensitivity: document.getElementById('symptomSensitivity').checked,
+                    symptomChewing: document.getElementById('symptomChewing').checked,
+                    symptomJaw: document.getElementById('symptomJaw').checked,
+                    symptomGrinding: document.getElementById('symptomGrinding').checked,
+                    gumBleed: document.querySelector('input[name="gumBleed"]:checked')?.value,
+                    prevOrtho: document.getElementById('prevOrtho').checked,
+                    prevRoot: document.getElementById('prevRoot').checked,
+                    prevImplant: document.getElementById('prevImplant').checked,
+                    prevCrown: document.getElementById('prevCrown').checked,
+                    prevDenture: document.getElementById('prevDenture').checked,
+                    visitReason: document.getElementById('visitReason').value
+                };
+                if (!patientsData[currentUser.id]) patientsData[currentUser.id] = {};
+                patientsData[currentUser.id].dental = dental;
+                savePatientsData();
+                showToast(currentLang === 'ar' ? 'تم حفظ التاريخ السني' : 'Dental history saved');
+            });
+        }
+
+        // تعديل دالة سبب الزيارة حسب المتطلبات الجديدة
+        function loadReasonTab() {
+            const c = document.getElementById('tab-reason');
+            const s = patientsData[currentUser.id]?.reason || {};
+            c.innerHTML = `
+                <div class="card">
+                    <div class="card-header"><i class="fas fa-notes-medical"></i> ${translations[currentLang].reasonForVisit}</div>
+                    <div class="card-body">
+                        <div class="question-item">
+                            <label class="form-label"><i class="fas fa-edit"></i> ${currentLang === 'ar' ? 'الشكوى الرئيسية' : 'Main Complaint'}</label>
+                            <textarea class="form-control" id="mainComplaint" rows="3">${s.mainComplaint || ''}</textarea>
+                        </div>
+                        <div class="question-item">
+                            <label class="form-label"><i class="fas fa-clock"></i> ${currentLang === 'ar' ? 'مدة الألم' : 'Pain duration'}</label>
+                            <select class="form-select" id="painDuration">
+                                <option ${s.painDuration === (currentLang==='ar'?'أقل من يوم':'Less than a day') ? 'selected' : ''}>${currentLang==='ar'?'أقل من يوم':'Less than a day'}</option>
+                                <option ${s.painDuration === (currentLang==='ar'?'1-3 أيام':'1-3 days') ? 'selected' : ''}>${currentLang==='ar'?'1-3 أيام':'1-3 days'}</option>
+                                <option ${s.painDuration === (currentLang==='ar'?'أسبوع':'A week') ? 'selected' : ''}>${currentLang==='ar'?'أسبوع':'A week'}</option>
+                                <option ${s.painDuration === (currentLang==='ar'?'أكثر':'More') ? 'selected' : ''}>${currentLang==='ar'?'أكثر':'More'}</option>
+                            </select>
+                        </div>
+                        <div class="question-item">
+                            <label class="form-label"><i class="fas fa-bolt"></i> ${currentLang === 'ar' ? 'نوع الألم' : 'Pain type'}</label>
+                            <select class="form-select" id="painType">
+                                <option ${s.painType === (currentLang==='ar'?'حاد':'Sharp') ? 'selected' : ''}>${currentLang==='ar'?'حاد':'Sharp'}</option>
+                                <option ${s.painType === (currentLang==='ar'?'نابض':'Throbbing') ? 'selected' : ''}>${currentLang==='ar'?'نابض':'Throbbing'}</option>
+                                <option ${s.painType === (currentLang==='ar'?'مستمر':'Constant') ? 'selected' : ''}>${currentLang==='ar'?'مستمر':'Constant'}</option>
+                            </select>
+                        </div>
+                        <div class="question-item">
+                            <label class="form-label"><i class="fas fa-chart-line"></i> ${currentLang === 'ar' ? 'شدة الألم (1-10)' : 'Pain intensity (1-10)'}</label>
+                            <input type="range" class="form-range" id="painRange" min="1" max="10" value="${s.painIntensity || 5}">
+                            <div class="text-center" id="painValue">${s.painIntensity || 5}</div>
+                        </div>
+                        <div class="question-item">
+                            <label class="form-label"><i class="fas fa-hand-holding-heart"></i> ${currentLang === 'ar' ? 'هل يحدث مع محفز؟' : 'Triggered by?'}</label>
+                            <select class="form-select" id="painTrigger">
+                                <option ${s.painTrigger === (currentLang==='ar'?'بدون محفز':'None') ? 'selected' : ''}>${currentLang==='ar'?'بدون محفز':'None'}</option>
+                                <option ${s.painTrigger === (currentLang==='ar'?'مع البارد':'Cold') ? 'selected' : ''}>${currentLang==='ar'?'مع البارد':'Cold'}</option>
+                                <option ${s.painTrigger === (currentLang==='ar'?'مع الساخن':'Hot') ? 'selected' : ''}>${currentLang==='ar'?'مع الساخن':'Hot'}</option>
+                                <option ${s.painTrigger === (currentLang==='ar'?'مع السكريات':'With sweets') ? 'selected' : ''}>${currentLang==='ar'?'مع السكريات':'With sweets'}</option>
+                            </select>
+                        </div>
+                        <div class="question-item">
+                            <label class="form-label"><i class="fas fa-hourglass-half"></i> ${translations[currentLang].painDurationAfterTrigger}</label>
+                            <select class="form-select" id="painDurationAfterTrigger">
+                                <option value="instantly" ${s.painDurationAfterTrigger === 'instantly' ? 'selected' : ''}>${translations[currentLang].instantly}</option>
+                                <option value="3to5" ${s.painDurationAfterTrigger === '3to5' ? 'selected' : ''}>${translations[currentLang].threeToFiveSeconds}</option>
+                                <option value="5to30" ${s.painDurationAfterTrigger === '5to30' ? 'selected' : ''}>${translations[currentLang].fiveToThirtySeconds}</option>
+                                <option value="minute+" ${s.painDurationAfterTrigger === 'minute+' ? 'selected' : ''}>${translations[currentLang].minuteOrMore}</option>
+                            </select>
+                        </div>
+                        <div class="question-item">
+                            <label class="form-label"><i class="fas fa-x-ray"></i> ${currentLang === 'ar' ? 'صورة الأشعة (X-ray):' : 'X-ray image:'}</label>
+                            <input type="file" id="xrayUpload" accept="image/*" class="form-control">
+                            <div id="xrayPreview" class="mt-2">
+                                ${patientsData[currentUser.id]?.xray ? `<img src="${patientsData[currentUser.id].xray}" class="xray-preview">` : ''}
+                            </div>
+                        </div>
+                        <button class="btn btn-primary save-tab-btn" id="saveReason">${translations[currentLang].save}</button>
+                    </div>
+                </div>
+            `;
+            const painRange = document.getElementById('painRange');
+            if (painRange) painRange.addEventListener('input', () => document.getElementById('painValue').textContent = painRange.value);
+            document.getElementById('xrayUpload').addEventListener('change', function (e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (ev) => {
+                        document.getElementById('xrayPreview').innerHTML = `<img src="${ev.target.result}" class="xray-preview">`;
+                        if (!patientsData[currentUser.id]) patientsData[currentUser.id] = {};
+                        patientsData[currentUser.id].xray = ev.target.result;
+                        savePatientsData();
+                        showToast(currentLang === 'ar' ? 'تم حفظ صورة الأشعة' : 'X-ray saved');
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+            document.getElementById('saveReason').addEventListener('click', () => {
+                const reason = {
+                    mainComplaint: document.getElementById('mainComplaint').value,
+                    painDuration: document.getElementById('painDuration').value,
+                    painType: document.getElementById('painType').value,
+                    painIntensity: document.getElementById('painRange').value,
+                    painTrigger: document.getElementById('painTrigger').value,
+                    painDurationAfterTrigger: document.getElementById('painDurationAfterTrigger').value
+                };
+                if (!patientsData[currentUser.id]) patientsData[currentUser.id] = {};
+                patientsData[currentUser.id].reason = reason;
+                savePatientsData();
+                showToast(currentLang === 'ar' ? 'تم حفظ سبب الزيارة' : 'Reason saved');
+            });
+        }
+
+        function loadFollowupTab() {
+            const c = document.getElementById('tab-followup');
+            c.innerHTML = `
+                <div class="card">
+                    <div class="card-header"><i class="fas fa-calendar-check"></i> ${currentLang === 'ar' ? 'نصائح ما بعد العلاج' : 'Post-treatment tips'}</div>
+                    <div class="card-body">
+                        <label class="form-label">${currentLang === 'ar' ? 'اختر نوع العلاج:' : 'Select treatment type:'}</label>
+                        <select class="form-select mb-4" id="treatmentTypeSelect">
+                            <option value="filling">${currentLang==='ar'?'حشو عادي':'Filling'}</option>
+                            <option value="rootcanal">${currentLang==='ar'?'حشو عصب':'Root canal'}</option>
+                            <option value="implant">${currentLang==='ar'?'زراعة':'Implant'}</option>
+                            <option value="extraction">${currentLang==='ar'?'خلع':'Extraction'}</option>
+                        </select>
+                        <div id="followupAdvice"></div>
+                    </div>
+                </div>
+            `;
+            const adviceData = {
+                filling: '<div class="alert alert-info">' + (currentLang==='ar'?'ألم خفيف لمدة 24-48 ساعة أمر طبيعي. تجنب الأكل حتى زوال المخدر.':'Mild pain for 24-48 hours is normal. Avoid eating until anesthesia wears off.') + '</div>',
+                rootcanal: '<div class="alert alert-warning">' + (currentLang==='ar'?'تجنب المضغ على السن المعالج لبضعة أيام. قد تشعر بحساسية.':'Avoid chewing on the treated tooth for a few days. You may feel sensitivity.') + '</div>',
+                implant: '<div class="alert alert-success">' + (currentLang==='ar'?'تجنب التدخين والمضغ القوي. اتبع تعليمات الطبيب.':'Avoid smoking and heavy chewing. Follow doctor\'s instructions.') + '</div>',
+                extraction: '<div class="alert alert-secondary">' + (currentLang==='ar'?'ضع كمادات باردة، وتجنب المضمضة لمدة 24 ساعة.':'Apply cold compresses, avoid rinsing for 24 hours.') + '</div>'
+            };
+            const select = document.getElementById('treatmentTypeSelect');
+            const adviceDiv = document.getElementById('followupAdvice');
+            select.addEventListener('change', () => adviceDiv.innerHTML = adviceData[select.value] || '');
+            adviceDiv.innerHTML = adviceData[select.value];
+        }
+
+        function loadTreatmentTab() {
+            const c = document.getElementById('tab-treatment');
+            const saved = patientsData[currentUser.id]?.treatmentPlan || '';
+            c.innerHTML = `
+                <div class="card">
+                    <div class="card-header"><i class="fas fa-notes-medical"></i> ${translations[currentLang].treatmentPlan}</div>
+                    <div class="card-body">
+                        <p>${saved || (currentLang==='ar'?'لا توجد خطة علاج بعد':'No treatment plan yet')}</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        function loadFaqTab() {
+            const c = document.getElementById('tab-faq');
+            c.innerHTML = `
+                <div class="card">
+                    <div class="card-header"><i class="fas fa-question-circle"></i> ${translations[currentLang].faq}</div>
+                    <div class="card-body">
+                        <div class="accordion" id="faqAccordion">
+                            <div class="accordion-item">
+                                <h2 class="accordion-header"><button class="accordion-button" data-bs-toggle="collapse" data-bs-target="#faq1">${currentLang==='ar'?'كم يستمر الألم بعد الحشو العادي؟':'How long does pain last after a filling?'}</button></h2>
+                                <div id="faq1" class="accordion-collapse collapse show"><div class="accordion-body">${currentLang==='ar'?'24-48 ساعة، إذا زاد عن 3 أيام اتصل بالطبيب.':'24-48 hours; if it lasts more than 3 days, contact your doctor.'}</div></div>
+                            </div>
+                            <div class="accordion-item">
+                                <h2 class="accordion-header"><button class="accordion-button collapsed" data-bs-toggle="collapse" data-bs-target="#faq2">${currentLang==='ar'?'متى يمكن الأكل بعد الخلع؟':'When can I eat after an extraction?'}</button></h2>
+                                <div id="faq2" class="accordion-collapse collapse"><div class="accordion-body">${currentLang==='ar'?'بعد ساعتين، تجنب الأكل على جهة الخلع.':'After two hours, avoid eating on the extraction side.'}</div></div>
+                            </div>
+                            <div class="accordion-item">
+                                <h2 class="accordion-header"><button class="accordion-button collapsed" data-bs-toggle="collapse" data-bs-target="#faq3">${currentLang==='ar'?'هل التبييض مؤلم؟':'Is teeth whitening painful?'}</button></h2>
+                                <div id="faq3" class="accordion-collapse collapse"><div class="accordion-body">${currentLang==='ar'?'قد يسبب حساسية مؤقتة.':'May cause temporary sensitivity.'}</div></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // تعديل دالة العقد حسب المتطلبات الجديدة
+        function loadContractTab() {
+            const c = document.getElementById('tab-contract');
+            const saved = patientsData[currentUser.id]?.contract || {};
+            const doctorDiagnosis = patientsData[currentUser.id]?.doctorDiagnosis || '';
+            const treatmentPlan = patientsData[currentUser.id]?.treatmentPlan || '';
+            const risks = patientsData[currentUser.id]?.risks || (currentLang==='ar'?'لا توجد مخاطر محددة':'No specific risks');
+            const doctorName = (currentUser.type === 'patient' && patientsData[currentUser.id]?.personal?.clinicId)
+                ? (users.find(u => u.id === patientsData[currentUser.id].personal.clinicId)?.name || (currentLang==='ar'?'الطبيب':'Doctor'))
+                : (currentLang==='ar'?'الطبيب':'Doctor');
+            const contractStatus = contracts[currentUser.id]?.status || 'pending';
+            const modifyRequest = contractModifyRequests[currentUser.id];
+            // التاريخ الحالي
+            const today = new Date();
+            const day = String(today.getDate()).padStart(2, '0');
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const year = today.getFullYear();
+            const formattedDate = `${year}-${month}-${day}`;
+
+            let contractContent = '';
+            if (currentUser.type === 'patient') {
+                if (contractStatus === 'pending') {
+                    // لا تظهر أزرار الموافقة إلا إذا كان هناك تشخيص وخطة علاج محفوظة
+                    if (doctorDiagnosis && treatmentPlan) {
+                        contractContent = `
+                            <div class="contract-box">
+                                <p>${translations[currentLang].contractContent}</p>
+                                <hr>
+                                <p><strong>${currentLang==='ar'?'اسم المريض:' : 'Patient name:'}</strong> <input type="text" class="form-control" id="contractPatientName" value="${saved.patientName || currentUser.name}" style="display:inline-block; width:auto;"></p>
+                                <p><strong>${currentLang==='ar'?'توقيع المريض:' : 'Patient signature:'}</strong> <input type="text" class="form-control" id="contractPatientSignature" value="${saved.patientSignature || ''}" placeholder="${currentLang==='ar'?'اكتب الاسم للتوقيع':'Type name as signature'}"></p>
+                                <p><strong>${currentLang==='ar'?'اسم الطبيب:' : 'Doctor name:'}</strong> <input type="text" class="form-control" id="contractDoctorName" value="${saved.doctorName || doctorName}" readonly></p>
+                                <p><strong>${currentLang==='ar'?'توقيع الطبيب:' : 'Doctor signature:'}</strong> <input type="text" class="form-control" id="contractDoctorSignature" value="${saved.doctorSignature || ''}" placeholder="${currentLang==='ar'?'اكتب الاسم للتوقيع':'Type name as signature'}" readonly></p>
+                                <p><strong>${currentLang==='ar'?'التاريخ:' : 'Date:'}</strong> 
+                                    <span class="form-control" style="display:inline-block; width:auto; background:transparent; border:none;">${formattedDate}</span>
+                                    <input type="hidden" id="contractDay" value="${day}">
+                                    <input type="hidden" id="contractMonth" value="${month}">
+                                    <input type="hidden" id="contractYear" value="${year}">
+                                </p>
+                                <hr>
+                                <h6>${currentLang==='ar'?'التشخيص (من الطبيب):' : 'Diagnosis (from doctor):'}</h6>
+                                <p>${doctorDiagnosis}</p>
+                                <h6>${currentLang==='ar'?'خطة العلاج (من الطبيب):' : 'Treatment plan (from doctor):'}</h6>
+                                <p>${treatmentPlan}</p>
+                                <h6>${currentLang==='ar'?'المخاطر المحتملة (من الطبيب):' : 'Potential risks (from doctor):'}</h6>
+                                <p>${risks}</p>
+                            </div>
+                            <div class="mt-3">
+                                <button class="btn btn-success" id="approveContract">${currentLang==='ar'?'أوافق':'I Agree'}</button>
+                                <button class="btn btn-danger" id="rejectContract">${currentLang==='ar'?'لا أوافق':'I Disagree'}</button>
+                            </div>
+                        `;
+                    } else {
+                        contractContent = `<p class="text-warning">${currentLang==='ar'?'لم يقم الطبيب بعد بإدخال التشخيص وخطة العلاج':'The doctor has not yet entered diagnosis and treatment plan'}</p>`;
+                    }
+                } else if (contractStatus === 'approved') {
+                    let modifyHtml = '';
+                    if (modifyRequest && modifyRequest.status === 'pending') {
+                        modifyHtml = `
+                            <div class="alert alert-info">
+                                ${currentLang==='ar'?'طلب تعديل العقد من الطبيب. هل توافق؟':'The doctor requests to modify the contract. Do you agree?'}
+                                <button class="btn btn-sm btn-success" onclick="respondToModifyRequest('${currentUser.id}', true)">${translations[currentLang].agree}</button>
+                                <button class="btn btn-sm btn-danger" onclick="respondToModifyRequest('${currentUser.id}', false)">${translations[currentLang].disagree}</button>
+                            </div>
+                        `;
+                    }
+                    contractContent = `
+                        <div class="contract-box">
+                            <p>${currentLang==='ar'?'تمت الموافقة على العقد ولا يمكن التعديل.':'Contract approved and cannot be modified.'}</p>
+                            ${modifyHtml}
+                            <hr>
+                            <p><strong>${currentLang==='ar'?'التاريخ:' : 'Date:'}</strong> ${contracts[currentUser.id]?.date || formattedDate}</p>
+                            <h6>${currentLang==='ar'?'التشخيص:' : 'Diagnosis:'}</h6>
+                            <p>${doctorDiagnosis || ''}</p>
+                            <h6>${currentLang==='ar'?'خطة العلاج:' : 'Treatment plan:'}</h6>
+                            <p>${treatmentPlan || ''}</p>
+                            <h6>${currentLang==='ar'?'المخاطر:' : 'Risks:'}</h6>
+                            <p>${risks}</p>
+                        </div>
+                    `;
+                } else {
+                    contractContent = `<p>${currentLang==='ar'?'تم رفض العقد.':'Contract rejected.'}</p>`;
+                }
+            } else {
+                // عرض الطبيب: يظهر توقيع الطبيب
+                contractContent = `
+                    <div class="contract-box">
+                        <p>${translations[currentLang].contractContent}</p>
+                        <hr>
+                        <h6>${currentLang==='ar'?'التشخيص:' : 'Diagnosis:'}</h6>
+                        <textarea class="form-control" id="doctorDiagnosis" rows="2">${doctorDiagnosis}</textarea>
+                        <h6 class="mt-3">${currentLang==='ar'?'خطة العلاج:' : 'Treatment plan:'}</h6>
+                        <textarea class="form-control" id="treatmentPlan" rows="3">${treatmentPlan}</textarea>
+                        <h6 class="mt-3">${currentLang==='ar'?'المخاطر المحتملة:' : 'Potential risks:'}</h6>
+                        <textarea class="form-control" id="risks" rows="2">${risks}</textarea>
+                        <h6 class="mt-3">${currentLang==='ar'?'توقيع الطبيب:' : 'Doctor signature:'}</h6>
+                        <input type="text" class="form-control" id="doctorSignature" value="${saved.doctorSignature || ''}" placeholder="${currentLang==='ar'?'اكتب اسمك للتوقيع':'Type your name as signature'}">
+                        <p class="mt-2"><strong>${currentLang==='ar'?'التاريخ:' : 'Date:'}</strong> ${formattedDate}</p>
+                        <button class="btn btn-primary mt-3" id="saveContractDiagnosis">${translations[currentLang].save}</button>
+                    </div>
+                `;
+            }
+
+            c.innerHTML = `
+                <div class="card">
+                    <div class="card-header"><i class="fas fa-file-contract"></i> ${translations[currentLang].contract}</div>
+                    <div class="card-body">
+                        ${contractContent}
+                    </div>
+                </div>
+            `;
+
+            if (currentUser.type === 'patient') {
+                if (document.getElementById('approveContract')) {
+                    document.getElementById('approveContract').addEventListener('click', () => {
+                        const day = document.getElementById('contractDay').value;
+                        const month = document.getElementById('contractMonth').value;
+                        const year = document.getElementById('contractYear').value;
+                        const dateStr = year && month && day ? `${year}-${month}-${day}` : formattedDate;
+                        contracts[currentUser.id] = { status: 'approved', date: dateStr };
+                        saveContracts();
+                        loadContractTab();
+                        showToast(translations[currentLang].contractApproved);
+                    });
+                }
+                if (document.getElementById('rejectContract')) {
+                    document.getElementById('rejectContract').addEventListener('click', () => {
+                        contracts[currentUser.id] = { status: 'rejected', date: formattedDate };
+                        saveContracts();
+                        loadContractTab();
+                        showToast(currentLang === 'ar' ? 'تم رفض العقد' : 'Contract rejected');
+                    });
+                }
+            } else if (currentUser.type === 'doctor') {
+                if (document.getElementById('saveContractDiagnosis')) {
+                    document.getElementById('saveContractDiagnosis').addEventListener('click', () => {
+                        const diagnosis = document.getElementById('doctorDiagnosis').value;
+                        const treatmentPlan = document.getElementById('treatmentPlan').value;
+                        const risks = document.getElementById('risks').value;
+                        const doctorSignature = document.getElementById('doctorSignature').value;
+                        if (!patientsData[currentUser.id]) patientsData[currentUser.id] = {};
+                        patientsData[currentUser.id].doctorDiagnosis = diagnosis;
+                        patientsData[currentUser.id].treatmentPlan = treatmentPlan;
+                        patientsData[currentUser.id].risks = risks;
+                        if (!patientsData[currentUser.id].contract) patientsData[currentUser.id].contract = {};
+                        patientsData[currentUser.id].contract.doctorSignature = doctorSignature;
+                        savePatientsData();
+                        showToast(translations[currentLang].contractSaved);
+                    });
+                }
+            }
+        }
+
+        window.respondToModifyRequest = function(patientId, approve) {
+            if (approve) {
+                delete contracts[patientId];
+                delete contractModifyRequests[patientId];
+                saveContracts();
+                saveContractModifyRequests();
+                showToast(currentLang==='ar'?'تمت الموافقة، يمكن للطبيب التعديل الآن':'Approved, doctor can modify now');
+            } else {
+                if (contractModifyRequests[patientId]) {
+                    contractModifyRequests[patientId].status = 'rejected';
+                    saveContractModifyRequests();
+                }
+                showToast(currentLang==='ar'?'تم رفض طلب التعديل':'Modify request rejected');
+            }
+            loadContractTab();
+        };
+
+        // دالة تحميل ملف المريض PDF
+        window.downloadPatientFilePDF = function() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const patientId = currentUser.id;
+            const patient = currentUser;
+            const info = patientsData[patientId] || {};
+            
+            let y = 20;
+            doc.setFontSize(18);
+            doc.text(translations[currentLang].myProfile, 105, y, { align: 'center' });
+            y += 10;
+            
+            doc.setFontSize(12);
+            doc.text(`${translations[currentLang].patientName}: ${patient.name}`, 20, y);
+            y += 7;
+            if (info.personal) {
+                doc.text(`${translations[currentLang].age}: ${info.personal.age || ''}`, 20, y);
+                y += 7;
+                doc.text(`${translations[currentLang].gender}: ${info.personal.gender || ''}`, 20, y);
+                y += 7;
+                doc.text(`${translations[currentLang].phone}: ${info.personal.phone || ''}`, 20, y);
+                y += 7;
+                doc.text(`${translations[currentLang].address}: ${info.personal.address || ''}`, 20, y);
+                y += 7;
+            }
+            
+            y += 5;
+            doc.setFontSize(14);
+            doc.text(translations[currentLang].medicalHistory, 20, y);
+            y += 7;
+            doc.setFontSize(10);
+            if (info.medical) {
+                let medicalText = '';
+                if (info.medical.heart) medicalText += (currentLang==='ar'?'أمراض القلب, ':'Heart disease, ');
+                if (info.medical.pressure) medicalText += (currentLang==='ar'?'ضغط الدم, ':'High BP, ');
+                if (info.medical.diabetes) medicalText += (currentLang==='ar'?'السكري, ':'Diabetes, ');
+                doc.text(medicalText, 20, y, { maxWidth: 170 });
+                y += 7;
+            }
+            
+            y += 5;
+            doc.setFontSize(14);
+            doc.text(translations[currentLang].dentalHistory, 20, y);
+            y += 7;
+            doc.setFontSize(10);
+            if (info.dental) {
+                doc.text(`${translations[currentLang].lastVisit}: ${info.dental.lastVisit || ''}`, 20, y);
+                y += 7;
+            }
+            
+            y += 5;
+            doc.setFontSize(14);
+            doc.text(translations[currentLang].reasonForVisit, 20, y);
+            y += 7;
+            doc.setFontSize(10);
+            if (info.reason) {
+                doc.text(`${translations[currentLang].mainComplaint}: ${info.reason.mainComplaint || ''}`, 20, y, { maxWidth: 170 });
+                y += 7;
+            }
+            
+            y += 5;
+            doc.setFontSize(14);
+            doc.text(translations[currentLang].treatmentPlan, 20, y);
+            y += 7;
+            doc.setFontSize(10);
+            doc.text(info.treatmentPlan || '', 20, y, { maxWidth: 170 });
+            
+            doc.save('patient-file.pdf');
+        };
+
+        function renderMyDoctors() {
+            const myRelations = relations.filter(r => r.patientId === currentUser.id);
+            const doctors = myRelations.map(r => users.find(u => u.id === r.doctorId)).filter(d => d);
+            const currentClinicId = patientsData[currentUser.id]?.personal?.clinicId;
+            const container = document.getElementById('myDoctorsList');
+            if (doctors.length === 0) container.innerHTML = '<p>' + (currentLang==='ar'?'لا يوجد أطباء بعد':'No doctors yet') + '</p>';
+            else {
+                let html = '';
+                doctors.forEach(doc => {
+                    const isCurrent = doc.id === currentClinicId;
+                    html += `<div class="patient-item"><div><strong>${doc.name}</strong> - ${doc.clinic || ''} ${isCurrent ? '<span class="doctor-badge">'+(currentLang==='ar'?'الطبيب الحالي':'Current doctor')+'</span>' : ''}</div></div>`;
+                });
+                container.innerHTML = html;
+            }
+        }
+
+        function renderPatientAppointments() {
+            const myFollowups = followups.filter(f => f.patientId === currentUser.id);
+            const container = document.getElementById('patientAppointments');
+            if (myFollowups.length === 0) container.innerHTML = '<p>' + (currentLang==='ar'?'لا توجد مواعيد متابعة':'No follow-up appointments') + '</p>';
+            else {
+                let html = '';
+                myFollowups.forEach(f => {
+                    const doctor = users.find(u => u.id === f.doctorId);
+                    html += `<div class="patient-item">${f.date} ${f.time} - د. ${doctor?.name || ''}</div>`;
+                });
+                container.innerHTML = html;
+            }
+        }
+
+        // ================== دوال الطبيب ==================
+        function showDoctorView() {
+            document.getElementById('v-pills-tabContent').innerHTML = `
+                <div class="tab-pane active" id="dashboard">
+                    <h2 class="page-title">${translations[currentLang].dashboard} <i class="fas fa-chart-pie"></i></h2>
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="card text-center" onclick="switchToTab('patients')">
+                                <div class="card-body">
+                                    <h3 id="patientsCount">0</h3>
+                                    <p>${translations[currentLang].patients}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card text-center" onclick="switchToTab('appointmentsMgmt')">
+                                <div class="card-body">
+                                    <h3 id="appointmentsCount">0</h3>
+                                    <p>${translations[currentLang].appointments}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card text-center" onclick="switchToTab('invoices')">
+                                <div class="card-body">
+                                    <h3 id="invoicesCount">0</h3>
+                                    <p>${translations[currentLang].invoices}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card text-center" onclick="switchToTab('reports')">
+                                <div class="card-body">
+                                    <h3 id="revenue">0</h3>
+                                    <p>${translations[currentLang].total}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="queue-container mt-4">
+                        <div class="queue-card"><h4>${translations[currentLang].currentPatient}</h4><div id="currentPatient"></div></div>
+                        <div class="queue-card"><h4>${translations[currentLang].waitingPatients}</h4><div id="waitingPatients"></div></div>
+                        <div class="queue-card"><h4>${translations[currentLang].followupPatients}</h4><div id="followupPatients"></div></div>
+                        <div class="queue-card"><h4>${translations[currentLang].donePatients}</h4><div id="donePatients"></div></div>
+                    </div>
+                </div>
+                <div class="tab-pane" id="patients">
+                    <h2 class="page-title">${translations[currentLang].patients} <i class="fas fa-users"></i></h2>
+                    <div class="filter-section">
+                        <input type="text" class="form-control" id="patientSearch" placeholder="${translations[currentLang].search}..." oninput="searchPatient()">
+                        <select class="form-select" id="filterDate" onchange="applyFilter()">
+                            <option value="all">${translations[currentLang].all}</option>
+                            <option value="today">${translations[currentLang].today}</option>
+                            <option value="week">${translations[currentLang].thisWeek}</option>
+                            <option value="month">${translations[currentLang].thisMonth}</option>
+                        </select>
+                        <input type="text" class="form-control" id="filterDiagnosis" placeholder="${translations[currentLang].byDiagnosis}" oninput="applyFilter()">
+                    </div>
+                    <div class="card">
+                        <div class="card-header">${translations[currentLang].patients}</div>
+                        <div class="card-body">
+                            <table class="table table-hover">
+                                <thead><tr><th>${translations[currentLang].patientName}</th><th>${translations[currentLang].phone || 'الهاتف'}</th><th></th></tr></thead>
+                                <tbody id="patientsTable"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="tab-pane" id="appointmentsMgmt">
+                    <h2 class="page-title">${translations[currentLang].appointments} <i class="fas fa-calendar-alt"></i></h2>
+                    <div class="card">
+                        <div class="card-header">${translations[currentLang].addAppointment}</div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <label class="form-label">${translations[currentLang].patient}</label>
+                                    <select class="form-select custom-select" id="appointmentPatient"></select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">${translations[currentLang].date}</label>
+                                    <input type="text" class="form-control datepicker" id="appointmentDate">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">${translations[currentLang].time}</label>
+                                    <input type="time" class="form-control" id="appointmentTime">
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label">&nbsp;</label>
+                                    <button class="btn btn-primary w-100" onclick="addAppointment()">${translations[currentLang].add}</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card mt-3">
+                        <div class="card-header">${translations[currentLang].upcomingAppointments} (${translations[currentLang].followupPatients})</div>
+                        <div class="card-body">
+                            <table class="table">
+                                <thead><tr><th>${translations[currentLang].patient}</th><th>${translations[currentLang].date}</th><th>${translations[currentLang].time}</th><th></th></tr></thead>
+                                <tbody id="appointmentsTable"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="tab-pane" id="invoices">
+                    <h2 class="page-title">${translations[currentLang].invoices} <i class="fas fa-file-invoice"></i></h2>
+                    <div class="card">
+                        <div class="card-header">${translations[currentLang].createInvoice}</div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <label class="form-label">${translations[currentLang].patient}</label>
+                                    <select class="form-select custom-select" id="invoicePatient"></select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">${translations[currentLang].service}</label>
+                                    <input type="text" class="form-control" id="invoiceService">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">${translations[currentLang].amount}</label>
+                                    <input type="number" class="form-control" id="invoicePrice">
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label">&nbsp;</label>
+                                    <button class="btn btn-primary w-100" onclick="createInvoice()">${translations[currentLang].add}</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card mt-3">
+                        <div class="card-header">${translations[currentLang].invoiceList}</div>
+                        <div class="card-body">
+                            <table class="table">
+                                <thead><tr><th>${translations[currentLang].patient}</th><th>${translations[currentLang].service}</th><th>${translations[currentLang].amount}</th><th>${translations[currentLang].date}</th><th></th></tr></thead>
+                                <tbody id="invoicesTable"></tbody>
+                            </table>
+                            <h5 class="mt-3">${translations[currentLang].total}: <span id="totalRevenue"></span></h5>
+                            <button class="btn btn-outline-accent mt-2" onclick="printInvoice()">${translations[currentLang].printReport}</button>
+                            <button class="btn btn-outline-accent mt-2" onclick="downloadInvoicePDF()">${translations[currentLang].savePDF}</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="tab-pane" id="reports">
+                    <h2 class="page-title">${translations[currentLang].reports} <i class="fas fa-chart-bar"></i></h2>
+                    <div class="card">
+                        <div class="card-body">
+                            <p>${translations[currentLang].patients}: <span id="reportPatients">0</span></p>
+                            <p>${translations[currentLang].appointments}: <span id="reportAppointments">0</span></p>
+                            <p>${translations[currentLang].invoices}: <span id="reportInvoices">0</span></p>
+                            <p>${translations[currentLang].total}: <span id="reportRevenue">0</span></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="tab-pane" id="backup">
+                    <h2 class="page-title">${translations[currentLang].backup} <i class="fas fa-database"></i></h2>
+                    <div class="card">
+                        <div class="card-body">
+                            <button class="btn btn-primary" onclick="backupData()">${translations[currentLang].downloadBackup}</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            loadDashboardData();
+            loadPatientsList();
+            loadAppointmentsList();
+            loadInvoicesList();
+            loadReports();
+            document.getElementById('patientSearch')?.addEventListener('input', searchPatient);
+            populatePatientSelects();
+            checkAppointments();
+            renderDoctorDashboard();
+            document.querySelectorAll('#v-pills-tab .nav-link').forEach(link => {
+                link.addEventListener('click', () => window.scrollTo(0, 0));
+            });
+        }
+
+        window.switchToTab = function(tabId) {
+            document.querySelector(`[data-bs-target="#${tabId}"]`).click();
+        };
+
+        function loadDashboardData() {
+            let myRelations = relations.filter(r => r.doctorId === currentUser.id);
+            let patientsCount = myRelations.length;
+            let today = new Date().toLocaleDateString('en-CA');
+            let appointmentsToday = appointments.filter(a => a.doctorId === currentUser.id && a.date === today).length;
+            let invoicesCount = invoices.filter(i => i.doctorId === currentUser.id).length;
+            let total = invoices.filter(i => i.doctorId === currentUser.id).reduce((sum, inv) => sum + Number(inv.amount), 0);
+            document.getElementById('patientsCount').innerText = patientsCount;
+            document.getElementById('appointmentsCount').innerText = appointmentsToday;
+            document.getElementById('invoicesCount').innerText = invoicesCount;
+            document.getElementById('revenue').innerText = total;
+        }
+
+        function loadPatientsList() {
+            let myRelations = relations.filter(r => r.doctorId === currentUser.id);
+            let patients = myRelations.map(r => users.find(u => u.id === r.patientId)).filter(p => p);
+            applyFilterToPatients(patients);
+        }
+
+        function applyFilter() {
+            let myRelations = relations.filter(r => r.doctorId === currentUser.id);
+            let patients = myRelations.map(r => users.find(u => u.id === r.patientId)).filter(p => p);
+            applyFilterToPatients(patients);
+        }
+
+        function applyFilterToPatients(patients) {
+            const search = document.getElementById('patientSearch')?.value.toLowerCase() || '';
+            const filterDate = document.getElementById('filterDate')?.value || 'all';
+            const filterDiagnosis = document.getElementById('filterDiagnosis')?.value.toLowerCase() || '';
+
+            let filtered = patients.filter(p => p.name.toLowerCase().includes(search));
+
+            if (filterDate !== 'all') {
+                const today = new Date();
+                const startOfWeek = new Date(today.setDate(today.getDate() - today.getDay() + 1));
+                startOfWeek.setHours(0,0,0,0);
+                const endOfWeek = new Date(startOfWeek);
+                endOfWeek.setDate(endOfWeek.getDate() + 6);
+                endOfWeek.setHours(23,59,59,999);
+                const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+                const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+                endOfMonth.setHours(23,59,59,999);
+
+                filtered = filtered.filter(p => {
+                    const patientAppointments = appointments.filter(a => a.patientId === p.id);
+                    if (patientAppointments.length === 0) return false;
+                    return patientAppointments.some(a => {
+                        const appDate = new Date(a.date);
+                        if (filterDate === 'today') {
+                            return appDate.toDateString() === new Date().toDateString();
+                        } else if (filterDate === 'week') {
+                            return appDate >= startOfWeek && appDate <= endOfWeek;
+                        } else if (filterDate === 'month') {
+                            return appDate >= startOfMonth && appDate <= endOfMonth;
+                        }
+                        return true;
+                    });
+                });
+            }
+
+            if (filterDiagnosis) {
+                filtered = filtered.filter(p => {
+                    const diagnosis = patientsData[p.id]?.doctorDiagnosis || '';
+                    return diagnosis.toLowerCase().includes(filterDiagnosis);
+                });
+            }
+
+            let html = '';
+            filtered.forEach(p => {
+                let phone = patientsData[p.id]?.personal?.phone || '---';
+                html += `<tr><td>${p.name}</td><td>${phone}</td><td>
+                    <button class="btn btn-sm btn-info" onclick="showPatientDetails('${p.id}')">${translations[currentLang].viewFile}</button>
+                    <button class="btn btn-sm btn-warning" onclick="viewContract('${p.id}')">${translations[currentLang].contract}</button>
+                    <button class="btn btn-sm btn-secondary" onclick="viewCaseImages('${p.id}')">${translations[currentLang].caseImages}</button>
+                </td></tr>`;
+            });
+            document.getElementById('patientsTable').innerHTML = html;
+        }
+
+        // دالة عرض صور الحالة مع إمكانية الحذف
+        window.viewCaseImages = function(patientId) {
+            const images = patientImages[patientId] || [];
+            let imagesHtml = '';
+            if (images.length === 0) {
+                imagesHtml = '<p>' + (currentLang==='ar'?'لا توجد صور':'No images') + '</p>';
+            } else {
+                imagesHtml = '<div class="row">';
+                images.forEach((img, index) => {
+                    imagesHtml += `
+                        <div class="col-md-4 mb-3">
+                            <div class="image-container">
+                                <img src="${img.url || img}" class="img-fluid xray-preview" onclick="openImageViewer('${patientId}', ${index})">
+                                <button class="delete-image-btn" onclick="deleteCaseImage('${patientId}', ${index})"><i class="fas fa-times"></i></button>
+                            </div>
+                        </div>`;
+                });
+                imagesHtml += '</div>';
+            }
+            document.getElementById('caseImagesBody').innerHTML = imagesHtml;
+            caseImagesModal.show();
+        };
+
+        // دالة حذف صورة
+        window.deleteCaseImage = function(patientId, index) {
+            if (confirm(currentLang==='ar'?'هل أنت متأكد من حذف هذه الصورة؟':'Are you sure you want to delete this image?')) {
+                let images = patientImages[patientId] || [];
+                images.splice(index, 1);
+                if (images.length === 0) {
+                    delete patientImages[patientId];
+                } else {
+                    patientImages[patientId] = images;
+                }
+                savePatientImages();
+                viewCaseImages(patientId);
+                showToast(currentLang==='ar'?'تم حذف الصورة':'Image deleted');
+            }
+        };
+
+        window.openImageViewer = function(patientId, index) {
+            const images = patientImages[patientId] || [];
+            if (images.length === 0) return;
+            let currentIndex = index;
+            const modalBody = document.getElementById('caseImagesBody');
+            const showImage = () => {
+                const imgUrl = images[currentIndex].url || images[currentIndex];
+                modalBody.innerHTML = `
+                    <div class="image-viewer-body">
+                        ${currentIndex > 0 ? '<i class="fas fa-chevron-left nav-arrow left" onclick="openImageViewer(\''+patientId+'\', '+(currentIndex-1)+')"></i>' : ''}
+                        <img src="${imgUrl}" class="img-fluid">
+                        ${currentIndex < images.length-1 ? '<i class="fas fa-chevron-right nav-arrow right" onclick="openImageViewer(\''+patientId+'\', '+(currentIndex+1)+')"></i>' : ''}
+                    </div>
+                `;
+            };
+            showImage();
+        };
+
+        window.viewContract = function(patientId) {
+            const patient = users.find(u => u.id === patientId);
+            const info = patientsData[patientId] || {};
+            const doctorDiagnosis = info.doctorDiagnosis || '';
+            const treatmentPlan = info.treatmentPlan || '';
+            const risks = info.risks || '';
+            const contractStatus = contracts[patientId]?.status || 'pending';
+            const contractDate = contracts[patientId]?.date || '';
+            
+            let contractHtml = `
+                <div class="contract-box">
+                    <p>${translations[currentLang].contractContent}</p>
+                    <hr>
+                    <p><strong>${currentLang==='ar'?'اسم المريض:' : 'Patient name:'}</strong> ${patient.name}</p>
+                    <p><strong>${currentLang==='ar'?'اسم الطبيب:' : 'Doctor name:'}</strong> ${currentUser.name}</p>
+                    <p><strong>${currentLang==='ar'?'التاريخ:' : 'Date:'}</strong> ${contractDate || (currentLang==='ar'?'غير محدد':'Not set')}</p>
+                    <p><strong>${currentLang==='ar'?'الحالة:' : 'Status:'}</strong> ${contractStatus === 'approved' ? (currentLang==='ar'?'موافق عليه':'Approved') : (contractStatus === 'rejected' ? (currentLang==='ar'?'مرفوض':'Rejected') : (currentLang==='ar'?'معلق':'Pending'))}</p>
+                    <hr>
+                    <h6>${currentLang==='ar'?'التشخيص:' : 'Diagnosis:'}</h6>
+                    <p>${doctorDiagnosis || (currentLang==='ar'?'غير محدد':'N/A')}</p>
+                    <h6>${currentLang==='ar'?'خطة العلاج:' : 'Treatment plan:'}</h6>
+                    <p>${treatmentPlan || (currentLang==='ar'?'غير محدد':'N/A')}</p>
+                    <h6>${currentLang==='ar'?'المخاطر المحتملة:' : 'Potential risks:'}</h6>
+                    <p>${risks || (currentLang==='ar'?'غير محدد':'N/A')}</p>
+                </div>
+            `;
+            document.getElementById('contractViewBody').innerHTML = contractHtml;
+            contractViewModal.show();
+        };
+
+        function searchPatient() {
+            applyFilter();
+        }
+
+        function populatePatientSelects() {
+            let myRelations = relations.filter(r => r.doctorId === currentUser.id);
+            let patients = myRelations.map(r => users.find(u => u.id === r.patientId)).filter(p => p);
+            let options = '<option value="">' + (currentLang==='ar'?'اختر المريض':'Select patient') + '</option>';
+            patients.forEach(p => options += `<option value="${p.id}">${p.name}</option>`);
+            document.getElementById('appointmentPatient').innerHTML = options;
+            document.getElementById('invoicePatient').innerHTML = options;
+        }
+
+        function addAppointment() {
+            let patientId = document.getElementById('appointmentPatient').value;
+            let date = document.getElementById('appointmentDate').value;
+            let time = document.getElementById('appointmentTime').value;
+            if (!patientId || !date || !time) return alert(currentLang==='ar'?'املأ جميع الحقول':'Fill all fields');
+            appointments.push({
+                id: Date.now(),
+                patientId,
+                doctorId: currentUser.id,
+                date,
+                time
+            });
+            saveAppointments();
+            loadAppointmentsList();
+            showToast(currentLang==='ar'?'تم إضافة الموعد':'Appointment added');
+        }
+
+        // تعديل دالة تعديل الموعد
+        window.editAppointment = function(appointmentId) {
+            const app = appointments.find(a => a.id == appointmentId);
+            if (!app) return;
+            const newDate = prompt(translations[currentLang].date, app.date);
+            if (!newDate) return;
+            const newTime = prompt(translations[currentLang].time, app.time);
+            if (!newTime) return;
+            app.date = newDate;
+            app.time = newTime;
+            saveAppointments();
+            loadAppointmentsList();
+            showToast(translations[currentLang].appointments);
+        };
+
+        function loadAppointmentsList() {
+            let today = new Date().toLocaleDateString('en-CA');
+            let upcomingApps = appointments.filter(a => a.doctorId === currentUser.id && a.date >= today).sort((a,b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
+            let followupApps = followups.filter(f => f.doctorId === currentUser.id && f.date >= today).map(f => ({
+                id: f.id,
+                patientId: f.patientId,
+                doctorId: f.doctorId,
+                date: f.date,
+                time: f.time,
+                isFollowup: true
+            }));
+            let all = [...upcomingApps, ...followupApps].sort((a,b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
+            let html = '';
+            all.forEach(a => {
+                let patient = users.find(u => u.id === a.patientId);
+                html += `<tr><td>${patient?.name || ''}</td><td>${a.date}</td><td>${a.time}</td><td>
+                    <button class="btn btn-sm btn-warning" onclick="editAppointment(${a.id})">${translations[currentLang].edit}</button>
+                </td></tr>`;
+            });
+            document.getElementById('appointmentsTable').innerHTML = html;
+        }
+
+        function checkAppointments() {
+            let today = new Date().toLocaleDateString('en-CA');
+            let todaysApps = appointments.filter(a => a.doctorId === currentUser.id && a.date === today);
+            if (todaysApps.length > 0) {
+                let names = todaysApps.map(a => users.find(u => u.id === a.patientId)?.name).join(', ');
+                showToast((currentLang==='ar'?`لديك مواعيد اليوم مع: ${names}`:`You have appointments today with: ${names}`));
+            }
+        }
+
+        function createInvoice() {
+            let patientId = document.getElementById('invoicePatient').value;
+            let service = document.getElementById('invoiceService').value;
+            let amount = document.getElementById('invoicePrice').value;
+            if (!patientId || !service || !amount) return alert(currentLang==='ar'?'املأ جميع الحقول':'Fill all fields');
+            invoices.push({
+                id: Date.now(),
+                patientId,
+                doctorId: currentUser.id,
+                service,
+                amount: Number(amount),
+                date: new Date().toLocaleDateString('en-CA')
+            });
+            saveInvoices();
+            loadInvoicesList();
+            loadDashboardData();
+            loadReports();
+            showToast(currentLang==='ar'?'تم إضافة الفاتورة':'Invoice added');
+        }
+
+        function loadInvoicesList() {
+            let invs = invoices.filter(i => i.doctorId === currentUser.id).sort((a,b) => b.id - a.id);
+            let html = '';
+            let total = 0;
+            invs.forEach(i => {
+                let patient = users.find(u => u.id === i.patientId);
+                html += `<tr><td>${patient?.name || ''}</td><td>${i.service}</td><td>${i.amount}</td><td>${i.date}</td><td><button class="btn btn-sm btn-outline-accent" onclick="printInvoice(${i.id})">${currentLang==='ar'?'طباعة':'Print'}</button></td></tr>`;
+                total += i.amount;
+            });
+            document.getElementById('invoicesTable').innerHTML = html;
+            document.getElementById('totalRevenue').innerText = total;
+        }
+
+        function loadReports() {
+            let myRelations = relations.filter(r => r.doctorId === currentUser.id);
+            let patientsCount = myRelations.length;
+            let appsCount = appointments.filter(a => a.doctorId === currentUser.id).length;
+            let invsCount = invoices.filter(i => i.doctorId === currentUser.id).length;
+            let total = invoices.filter(i => i.doctorId === currentUser.id).reduce((sum, i) => sum + i.amount, 0);
+            document.getElementById('reportPatients').innerText = patientsCount;
+            document.getElementById('reportAppointments').innerText = appsCount;
+            document.getElementById('reportInvoices').innerText = invsCount;
+            document.getElementById('reportRevenue').innerText = total;
+        }
+
+        window.printInvoice = function(id) {
+            let inv = invoices.find(i => i.id === id);
+            if (!inv) { window.print(); return; }
+            let patient = users.find(u => u.id === inv.patientId);
+            let win = window.open('', '_blank');
+            win.document.write(`
+                <html dir="${currentLang==='ar'?'rtl':'ltr'}"><head><title>${currentLang==='ar'?'فاتورة':'Invoice'}</title>
+                <style>body{font-family:${currentLang==='ar'?'Lateef':'Noto Naskh Arabic'};padding:20px;}</style></head>
+                <body>
+                <h2>${currentLang==='ar'?'فاتورة علاج':'Treatment Invoice'}</h2>
+                <p>${currentLang==='ar'?'التاريخ':'Date'}: ${inv.date}</p>
+                <p>${currentLang==='ar'?'المريض':'Patient'}: ${patient?.name}</p>
+                <p>${currentLang==='ar'?'الخدمة':'Service'}: ${inv.service}</p>
+                <p>${currentLang==='ar'?'المبلغ':'Amount'}: ${inv.amount}</p>
+                <hr>
+                <p>${currentLang==='ar'?'شكراً لزيارتكم':'Thank you for your visit'}</p>
+                </body></html>
+            `);
+            win.print();
+        };
+
+        window.downloadInvoicePDF = function() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            html2canvas(document.querySelector('#invoicesTable')).then(canvas => {
+                const imgData = canvas.toDataURL('image/png');
+                doc.addImage(imgData, 'PNG', 10, 10, 190, 0);
+                doc.save('invoice.pdf');
+            });
+        };
+
+        function backupData() {
+            let data = {
+                users,
+                patientsData,
+                queue,
+                followups,
+                relations,
+                profilePics,
+                appointments,
+                invoices,
+                subscriptions,
+                dentalCharts,
+                patientImages,
+                patientComments,
+                contracts,
+                contractModifyRequests
+            };
+            let blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+            let a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'dentflow-backup.json';
+            a.click();
+            showToast(currentLang==='ar'?'تم إنشاء النسخة الاحتياطية':'Backup created');
+        }
+
+        function renderDoctorDashboard() {
+            const today = new Date().toLocaleDateString('en-CA');
+            const tq = queue.filter(q => q.date === today);
+            const current = tq.find(q => q.status === 'current');
+            const waiting = tq.filter(q => q.status === 'waiting').sort((a,b) => a.turnNumber - b.turnNumber);
+            const followup = tq.filter(q => q.status === 'followup');
+            const done = tq.filter(q => q.status === 'done');
+
+            document.getElementById('currentPatient').innerHTML = current ? renderPatientItem(current, true) : '<p>' + translations[currentLang].noCurrentPatient + '</p>';
+            document.getElementById('waitingPatients').innerHTML = waiting.length ? waiting.map(w => renderPatientItem(w, false, true)).join('') : '<p>' + translations[currentLang].noWaitingPatients + '</p>';
+            document.getElementById('followupPatients').innerHTML = followup.length ? followup.map(f => renderPatientItem(f)).join('') : '<p>' + translations[currentLang].noFollowupPatients + '</p>';
+            document.getElementById('donePatients').innerHTML = done.length ? done.map(d => renderPatientItem(d)).join('') : '<p>' + translations[currentLang].noCompletedPatients + '</p>';
+        }
+
+        function renderPatientItem(queueItem, isCurrent = false, showStart = false) {
+            const patient = users.find(u => u.id === queueItem.patientId);
+            const followupDate = followups.find(f => f.patientId === queueItem.patientId && f.doctorId === currentUser.id);
+            let actions = '';
+            if (isCurrent) {
+                actions = `<div class="patient-actions">
+                    <button class="btn btn-success btn-sm" onclick="markAsDone('${queueItem.patientId}')">${translations[currentLang].done}</button>
+                    <button class="btn btn-warning btn-sm" onclick="markAsFollowup('${queueItem.patientId}')">${translations[currentLang].followup}</button>
+                    <button class="btn btn-info btn-sm" onclick="showPatientDetails('${queueItem.patientId}')">${translations[currentLang].viewFile}</button>
+                    <button class="btn btn-secondary btn-sm" onclick="viewContract('${queueItem.patientId}')">${translations[currentLang].contract}</button>
+                </div>`;
+            } else if (showStart) {
+                actions = `<div class="patient-actions">
+                    <button class="btn btn-primary btn-sm start-session-btn" onclick="startSession('${queueItem.patientId}')">${translations[currentLang].startSession}</button>
+                    <button class="btn btn-info btn-sm" onclick="showPatientDetails('${queueItem.patientId}')">${translations[currentLang].viewFile}</button>
+                    <button class="btn btn-secondary btn-sm" onclick="viewContract('${queueItem.patientId}')">${translations[currentLang].contract}</button>
+                </div>`;
+            }
+            return `<div class="patient-item"><div><strong>${patient?.name || (currentLang==='ar'?'مريض':'Patient')}</strong> (${translations[currentLang].turn} ${queueItem.turnNumber})${followupDate ? `<br>${translations[currentLang].followup}: ${followupDate.date}` : ''}</div>${actions}</div>`;
+        }
+
+        window.startSession = function(patientId) {
+            const today = new Date().toLocaleDateString('en-CA');
+            const current = queue.find(q => q.date === today && q.status === 'current');
+            if (current) {
+                current.status = 'waiting';
+            }
+            const p = queue.find(q => q.date === today && q.patientId === patientId && q.status === 'waiting');
+            if (p) {
+                p.status = 'current';
+                saveQueue();
+                renderDoctorDashboard();
+                showPatientDetails(patientId);
+                showToast((currentLang==='ar'?`بدأت جلسة مع ${users.find(u => u.id === patientId)?.name}`:`Session started with ${users.find(u => u.id === patientId)?.name}`));
+            } else {
+                alert(currentLang==='ar'?'المريض غير موجود في قائمة الانتظار اليوم':'Patient not in today\'s queue');
+            }
+        };
+
+        window.markAsDone = function(patientId) {
+            const today = new Date().toLocaleDateString('en-CA');
+            const current = queue.find(q => q.date === today && q.status === 'current');
+            if (current && current.patientId === patientId) {
+                current.status = 'done';
+                const next = queue.find(q => q.date === today && q.status === 'waiting');
+                if (next) next.status = 'current';
+                saveQueue();
+                renderDoctorDashboard();
+                showToast(translations[currentLang].done);
+            } else {
+                alert(currentLang==='ar'?'لا يوجد مريض حالي بهذا الاسم':'No current patient with that name');
+            }
+        };
+
+        window.markAsFollowup = function(patientId) {
+            selectedPatientForFollowup = patientId;
+            followupModal.show();
+        };
+
+        document.getElementById('saveFollowup').addEventListener('click', () => {
+            const date = document.getElementById('followupDate').value;
+            const time = document.getElementById('followupTime').value;
+            if (!date || !time) { alert(currentLang==='ar'?'اختر التاريخ والوقت':'Select date and time'); return; }
+
+            const today = new Date().toLocaleDateString('en-CA');
+            const current = queue.find(q => q.date === today && q.status === 'current');
+            if (current && current.patientId === selectedPatientForFollowup) {
+                current.status = 'followup';
+            } else {
+                const waitingPatient = queue.find(q => q.date === today && q.patientId === selectedPatientForFollowup && q.status === 'waiting');
+                if (waitingPatient) waitingPatient.status = 'followup';
+            }
+
+            followups.push({ patientId: selectedPatientForFollowup, doctorId: currentUser.id, date, time });
+            saveFollowups();
+            saveQueue();
+
+            const nextWaiting = queue.find(q => q.date === today && q.status === 'waiting');
+            if (nextWaiting) {
+                nextWaiting.status = 'current';
+                saveQueue();
+            }
+
+            followupModal.hide();
+            renderDoctorDashboard();
+            showToast(translations[currentLang].followup);
+        });
+
+        // دالة عرض تفاصيل المريض مع إمكانية حذف الصور
+        window.showPatientDetails = function(patientId) {
+            const patient = users.find(u => u.id === patientId);
+            const info = patientsData[patientId] || {};
+            const images = patientImages[patientId] || [];
+            const comments = patientComments[patientId] || '';
+            const patientPic = profilePics[patientId] || 'https://via.placeholder.com/100';
+            const beforeImages = images.filter(img => img.category === 'before');
+            const afterImages = images.filter(img => img.category === 'after');
+            const generalImages = images.filter(img => !img.category || img.category === 'general');
+
+            function renderImages(imgs) {
+                if (imgs.length === 0) return '<p>' + (currentLang==='ar'?'لا توجد صور':'No images') + '</p>';
+                let html = '<div class="row">';
+                imgs.forEach((img, idx) => {
+                    html += `
+                        <div class="col-md-4 mb-2">
+                            <div class="image-container">
+                                <img src="${img.url || img}" class="img-fluid xray-preview" onclick="window.open('${img.url || img}')">
+                                <button class="delete-image-btn" onclick="deleteCaseImage('${patientId}', ${idx})"><i class="fas fa-times"></i></button>
+                            </div>
+                        </div>`;
+                });
+                html += '</div>';
+                return html;
+            }
+
+            const modalHtml = `
+                <div class="modal fade" id="patientDetailsModal" tabindex="-1">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content glass-card">
+                            <div class="modal-header">
+                                <h5 class="modal-title">${currentLang==='ar'?'ملف المريض: ':'Patient file: '}${patient.name}</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="text-center mb-3">
+                                    <img src="${patientPic}" class="rounded-circle" style="width:100px;height:100px;object-fit:cover;border:3px solid #00cec9;">
+                                </div>
+                                <h6 class="text-primary">${currentLang==='ar'?'التشخيص':'Diagnosis'}</h6>
+                                <textarea class="form-control" id="doctorDiagnosis" rows="2" ${contracts[patientId]?.status === 'approved' ? 'readonly' : ''}>${info.doctorDiagnosis || ''}</textarea>
+                                <h6 class="mt-3 text-primary">${currentLang==='ar'?'خطة العلاج':'Treatment plan'}</h6>
+                                <textarea class="form-control" id="treatmentPlan" rows="3" ${contracts[patientId]?.status === 'approved' ? 'readonly' : ''}>${info.treatmentPlan || ''}</textarea>
+                                <h6 class="mt-3 text-primary">${currentLang==='ar'?'المخاطر المحتملة':'Potential risks'}</h6>
+                                <textarea class="form-control" id="risks" rows="2" ${contracts[patientId]?.status === 'approved' ? 'readonly' : ''}>${info.risks || ''}</textarea>
+                                ${contracts[patientId]?.status === 'approved' ? 
+                                    `<div class="alert alert-info mt-2">${currentLang==='ar'?'العقد موافق عليه، لا يمكن التعديل.':'Contract approved, cannot modify.'}</div>
+                                     <button class="btn btn-warning" onclick="requestContractModify('${patientId}')">${currentLang==='ar'?'طلب تعديل العقد':'Request modify contract'}</button>` : ''}
+                                <hr>
+                                <h6 class="text-primary">${currentLang==='ar'?'البيانات الشخصية':'Personal data'}</h6>
+                                <div class="row">
+                                    <div class="col-md-6"><strong>${currentLang==='ar'?'العمر':'Age'}:</strong> ${info.personal?.age || (currentLang==='ar'?'غير محدد':'N/A')}</div>
+                                    <div class="col-md-6"><strong>${currentLang==='ar'?'النوع':'Gender'}:</strong> ${info.personal?.gender || (currentLang==='ar'?'غير محدد':'N/A')}</div>
+                                    <div class="col-md-6"><strong>${currentLang==='ar'?'المهنة':'Occupation'}:</strong> ${info.personal?.job || (currentLang==='ar'?'غير محدد':'N/A')}</div>
+                                    <div class="col-md-6"><strong>${currentLang==='ar'?'العنوان':'Address'}:</strong> ${info.personal?.address || (currentLang==='ar'?'غير محدد':'N/A')}</div>
+                                    <div class="col-md-6"><strong>${currentLang==='ar'?'الهاتف':'Phone'}:</strong> ${info.personal?.phone || (currentLang==='ar'?'غير محدد':'N/A')}</div>
+                                </div>
+                                <h6 class="mt-3 text-primary">${currentLang==='ar'?'التاريخ الطبي':'Medical history'}</h6>
+                                <div class="row">
+                                    <div class="col-md-6"><strong>${currentLang==='ar'?'أمراض القلب':'Heart disease'}:</strong> ${info.medical?.heart ? (currentLang==='ar'?'نعم':'Yes') : (currentLang==='ar'?'لا':'No')}</div>
+                                    <div class="col-md-6"><strong>${currentLang==='ar'?'ضغط الدم':'High BP'}:</strong> ${info.medical?.pressure ? (currentLang==='ar'?'نعم':'Yes') : (currentLang==='ar'?'لا':'No')}</div>
+                                    <div class="col-md-6"><strong>${currentLang==='ar'?'السكري':'Diabetes'}:</strong> ${info.medical?.diabetes ? (currentLang==='ar'?'نعم':'Yes') : (currentLang==='ar'?'لا':'No')}</div>
+                                    <div class="col-md-6"><strong>${currentLang==='ar'?'الربو':'Asthma'}:</strong> ${info.medical?.asthma ? (currentLang==='ar'?'نعم':'Yes') : (currentLang==='ar'?'لا':'No')}</div>
+                                </div>
+                                <h6 class="mt-3 text-primary">${currentLang==='ar'?'التاريخ السني':'Dental history'}</h6>
+                                <div class="row">
+                                    <div class="col-md-6"><strong>${currentLang==='ar'?'آخر زيارة':'Last visit'}:</strong> ${info.dental?.lastVisit || (currentLang==='ar'?'غير محدد':'N/A')}</div>
+                                    <div class="col-md-6"><strong>${currentLang==='ar'?'ألم في الأسنان':'Tooth pain'}:</strong> ${info.dental?.symptomPain ? (currentLang==='ar'?'نعم':'Yes') : (currentLang==='ar'?'لا':'No')}</div>
+                                </div>
+                                <h6 class="mt-3 text-primary">${currentLang==='ar'?'سبب الزيارة':'Reason for visit'}</h6>
+                                <div class="row">
+                                    <div class="col-md-12"><strong>${translations[currentLang].mainComplaint}:</strong> ${info.reason?.mainComplaint || (currentLang==='ar'?'غير محدد':'N/A')}</div>
+                                    <div class="col-md-6"><strong>${currentLang==='ar'?'مدة الألم':'Pain duration'}:</strong> ${info.reason?.painDuration || (currentLang==='ar'?'غير محدد':'N/A')}</div>
+                                    <div class="col-md-6"><strong>${currentLang==='ar'?'نوع الألم':'Pain type'}:</strong> ${info.reason?.painType || (currentLang==='ar'?'غير محدد':'N/A')}</div>
+                                    <div class="col-md-6"><strong>${currentLang==='ar'?'شدة الألم':'Intensity'}:</strong> ${info.reason?.painIntensity || (currentLang==='ar'?'غير محدد':'N/A')}</div>
+                                    <div class="col-md-6"><strong>${currentLang==='ar'?'المحفز':'Trigger'}:</strong> ${info.reason?.painTrigger || (currentLang==='ar'?'غير محدد':'N/A')}</div>
+                                    <div class="col-md-6"><strong>${translations[currentLang].painDurationAfterTrigger}:</strong> ${info.reason?.painDurationAfterTrigger ? translations[currentLang][info.reason.painDurationAfterTrigger] || info.reason.painDurationAfterTrigger : (currentLang==='ar'?'غير محدد':'N/A')}</div>
+                                </div>
+                                ${info.xray ? `<h6 class="mt-3 text-primary">${currentLang==='ar'?'صورة الأشعة':'X-ray'}</h6><img src="${info.xray}" class="xray-preview">` : ''}
+                                <hr>
+                                <h6 class="text-primary">${currentLang==='ar'?'صور إضافية للحالة':'Additional case images'}</h6>
+                                <ul class="nav nav-tabs" id="imageTabs">
+                                    <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#before">${translations[currentLang].before}</a></li>
+                                    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#after">${translations[currentLang].after}</a></li>
+                                    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#general">${translations[currentLang].general}</a></li>
+                                </ul>
+                                <div class="tab-content mt-2">
+                                    <div class="tab-pane active" id="before">${renderImages(beforeImages)}</div>
+                                    <div class="tab-pane" id="after">${renderImages(afterImages)}</div>
+                                    <div class="tab-pane" id="general">${renderImages(generalImages)}</div>
+                                </div>
+                                <h6 class="mt-3">${currentLang==='ar'?'إضافة صور جديدة':'Add new images'}</h6>
+                                <select class="form-select mb-2" id="imageCategory">
+                                    <option value="before">${translations[currentLang].before}</option>
+                                    <option value="after">${translations[currentLang].after}</option>
+                                    <option value="general">${translations[currentLang].general}</option>
+                                </select>
+                                <input type="file" id="additionalImages" accept="image/*" multiple class="form-control mb-2">
+                                <div id="additionalImagesPreview"></div>
+                                <h6 class="mt-3 text-primary">${currentLang==='ar'?'تعليق الطبيب':'Doctor\'s comment'}</h6>
+                                <textarea class="form-control" id="doctorComment" rows="3">${comments}</textarea>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-primary" onclick="savePatientDetails('${patientId}')">${translations[currentLang].save}</button>
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">${translations[currentLang].close}</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            if (document.getElementById('patientDetailsModal')) document.getElementById('patientDetailsModal').remove();
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+            const modal = new bootstrap.Modal(document.getElementById('patientDetailsModal'));
+            modal.show();
+
+            document.getElementById('additionalImages').addEventListener('change', function(e) {
+                const files = Array.from(e.target.files);
+                const category = document.getElementById('imageCategory').value;
+                const previewDiv = document.getElementById('additionalImagesPreview');
+                previewDiv.innerHTML = '';
+                files.forEach(file => {
+                    const reader = new FileReader();
+                    reader.onload = (ev) => {
+                        const img = document.createElement('img');
+                        img.src = ev.target.result;
+                        img.className = 'xray-preview';
+                        img.style.maxWidth = '100px';
+                        img.style.margin = '5px';
+                        img.onclick = () => window.open(ev.target.result);
+                        previewDiv.appendChild(img);
+                        if (!patientImages[patientId]) patientImages[patientId] = [];
+                        patientImages[patientId].push({ url: ev.target.result, category: category });
+                        savePatientImages();
+                    };
+                    reader.readAsDataURL(file);
+                });
+            });
+        };
+
+        window.requestContractModify = function(patientId) {
+            if (contracts[patientId]?.status === 'approved') {
+                contractModifyRequests[patientId] = { status: 'pending', date: new Date().toISOString() };
+                saveContractModifyRequests();
+                showToast(currentLang==='ar'?'تم إرسال طلب التعديل للمريض':'Modify request sent to patient');
+            }
+        };
+
+        window.savePatientDetails = function(patientId) {
+            const diagnosis = document.getElementById('doctorDiagnosis').value;
+            const treatmentPlan = document.getElementById('treatmentPlan').value;
+            const risks = document.getElementById('risks').value;
+            const comment = document.getElementById('doctorComment').value;
+            if (contracts[patientId]?.status === 'approved') {
+                if (contractModifyRequests[patientId]?.status !== 'approved') {
+                    alert(currentLang==='ar'?'لا يمكن التعديل بعد موافقة المريض على العقد إلا بعد طلب موافقة جديدة':'Cannot modify after patient approval without a new approval');
+                    return;
+                } else {
+                    delete contractModifyRequests[patientId];
+                    delete contracts[patientId];
+                }
+            }
+            if (!patientsData[patientId]) patientsData[patientId] = {};
+            patientsData[patientId].doctorDiagnosis = diagnosis;
+            patientsData[patientId].treatmentPlan = treatmentPlan;
+            patientsData[patientId].risks = risks;
+            patientComments[patientId] = comment;
+            savePatientsData();
+            savePatientComments();
+            saveContracts();
+            saveContractModifyRequests();
+            showToast(translations[currentLang].contractSaved);
+            bootstrap.Modal.getInstance(document.getElementById('patientDetailsModal')).hide();
+        };
+
+        document.querySelectorAll('.tooth-selector').forEach(el => {
+            el.addEventListener('click', function () {
+                document.getElementById('selectedTooth').value = this.dataset.tooth;
+                document.querySelectorAll('.tooth-selector').forEach(c => c.setAttribute('fill', '#00cec9'));
+                this.setAttribute('fill', '#6c5ce7');
+            });
+        });
+        document.getElementById('confirmTooth').addEventListener('click', () => {
+            const s = document.getElementById('selectedTooth').value;
+            if (s) {
+                document.getElementById('painLocation').value = (currentLang==='ar'?`السن رقم ${s}`:`Tooth #${s}`);
+                toothModal.hide();
+            }
+        });
+
+        // بدء التشغيل
+        (function init() {
+            const saved = localStorage.getItem('dentflow_currentUser');
+            if (saved) {
+                currentUser = JSON.parse(saved);
+                if (currentUser.type === 'doctor') {
+                    checkSubscription();
+                } else {
+                    showMainApp();
+                }
+            }
+            $('.datepicker').datepicker({ format: 'yyyy-mm-dd', language: currentLang==='ar'?'ar':'en', autoclose: true });
+            updateUILanguage();
+        })();
+    </script>
+</body>
+</html>
