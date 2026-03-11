@@ -27,6 +27,10 @@
     <!-- jsPDF و html2canvas لتحميل PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <style>
         * {
             margin: 0;
@@ -690,6 +694,23 @@
             position: relative;
             display: inline-block;
         }
+        .section-title-bold {
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: #00cec9;
+            margin-top: 15px;
+            margin-bottom: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+            padding-bottom: 5px;
+        }
+        .section-content-light {
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 400;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 8px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
         @media (max-width: 768px) {
             .sidebar {
                 position: fixed;
@@ -724,6 +745,68 @@
         .lang-switch button.active {
             background: #00cec9;
             color: #0b4f6c;
+        }
+        .download-pdf-btn {
+            background: #00cec9;
+            color: white;
+            border: none;
+            border-radius: 30px;
+            padding: 8px 16px;
+            margin: 5px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .download-pdf-btn:hover {
+            background: #00b894;
+            transform: scale(1.05);
+        }
+        /* AI Assistant Styles */
+        .ai-assistant-card {
+            background: rgba(0, 206, 201, 0.1);
+            border: 2px solid #00cec9;
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .ai-response-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+            border-left: 5px solid #00cec9;
+        }
+        .ai-disclaimer {
+            background: rgba(255, 193, 7, 0.2);
+            border: 1px solid #ffc107;
+            color: #ffc107;
+            padding: 10px;
+            border-radius: 10px;
+            font-size: 14px;
+            margin-top: 10px;
+            text-align: center;
+        }
+        .ai-badge {
+            background: #00cec9;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+        .copy-btn {
+            background: transparent;
+            border: 1px solid #00cec9;
+            color: #00cec9;
+            padding: 5px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .copy-btn:hover {
+            background: #00cec9;
+            color: white;
         }
     </style>
 </head>
@@ -1051,6 +1134,20 @@
             }
         })();
 
+        // تهيئة Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyDummyKeyForExample",
+            authDomain: "dentflow-example.firebaseapp.com",
+            projectId: "dentflow-example",
+            storageBucket: "dentflow-example.appspot.com",
+            messagingSenderId: "123456789012",
+            appId: "1:123456789012:web:abcdef1234567890"
+        };
+
+        // تهيئة Firebase (سيتم تفعيلها عند الربط الفعلي)
+        let firebaseApp, firebaseAuth, firebaseDb;
+        let useFirebase = false;
+
         // -------------------- الترجمة الكاملة --------------------
         const translations = {
             ar: {
@@ -1193,6 +1290,76 @@
                 withSweets: 'مع السكريات',
                 deleteImage: 'حذف الصورة',
                 downloadPatientFilePDF: 'تحميل ملف المريض PDF',
+                modify: 'تعديل',
+                saveAll: 'حفظ الكل',
+                approve: 'موافقة',
+                reject: 'رفض',
+                doctorDiagnosis: 'تشخيص الطبيب',
+                treatmentPlan: 'خطة العلاج',
+                potentialRisks: 'المخاطر المحتملة',
+                patientFile: 'ملف المريض',
+                noData: 'لا توجد بيانات',
+                uploadNewImages: 'رفع صور جديدة',
+                selectCategory: 'اختر التصنيف',
+                doctorComment: 'تعليق الطبيب',
+                addComment: 'إضافة تعليق',
+                saveComment: 'حفظ التعليق',
+                deleteComment: 'حذف التعليق',
+                editComment: 'تعديل التعليق',
+                noComments: 'لا توجد تعليقات',
+                imagesSaved: 'تم حفظ الصور',
+                commentSaved: 'تم حفظ التعليق',
+                commentDeleted: 'تم حذف التعليق',
+                confirmDelete: 'تأكيد الحذف',
+                areYouSure: 'هل أنت متأكد؟',
+                yes: 'نعم',
+                no: 'لا',
+                success: 'نجاح',
+                error: 'خطأ',
+                warning: 'تحذير',
+                info: 'معلومة',
+                loading: 'جاري التحميل...',
+                pleaseWait: 'الرجاء الانتظار...',
+                operationSuccessful: 'تمت العملية بنجاح',
+                operationFailed: 'فشلت العملية',
+                tryAgain: 'حاول مرة أخرى',
+                networkError: 'خطأ في الشبكة',
+                serverError: 'خطأ في الخادم',
+                unauthorized: 'غير مصرح',
+                forbidden: 'ممنوع',
+                notFound: 'غير موجود',
+                conflict: 'تعارض',
+                tooManyRequests: 'طلبات كثيرة',
+                internalError: 'خطأ داخلي',
+                serviceUnavailable: 'الخدمة غير متاحة',
+                gatewayTimeout: 'انتهاء المهلة',
+                unknownError: 'خطأ غير معروف',
+                // AI Assistant Translations
+                aiAssistant: 'مساعد الذكاء الاصطناعي للعلاج',
+                aiAssistantDesc: 'احصل على اقتراحات لخطط العلاج بناءً على أعراض المريض',
+                patientInfo: 'معلومات المريض',
+                symptoms: 'الأعراض',
+                xrayNotes: 'ملاحظات الأشعة',
+                generatePlan: 'توليد خطة العلاج',
+                generating: 'جاري التوليد...',
+                aiResponse: 'استجابة الذكاء الاصطناعي',
+                diagnosisSummary: 'ملخص التشخيص',
+                suggestedTreatment: 'خطة العلاج المقترحة',
+                medications: 'الأدوية المقترحة',
+                followupAdvice: 'نصائح المتابعة',
+                copyPlan: 'نسخ الخطة',
+                saveToPatient: 'حفظ في ملف المريض',
+                disclaimer: 'تنبيه: اقتراحات الذكاء الاصطناعي هي للمساعدة فقط ويجب مراجعتها دائمًا من قبل طبيب أسنان مؤهل.',
+                planSaved: 'تم حفظ الخطة في ملف المريض',
+                planCopied: 'تم نسخ الخطة',
+                fillRequiredFields: 'يرجى ملء جميع الحقول المطلوبة',
+                selectPatientFirst: 'يرجى اختيار المريض أولاً',
+                age: 'العمر',
+                gender: 'النوع',
+                male: 'ذكر',
+                female: 'أنثى',
+                chiefComplaint: 'الشكوى الرئيسية',
+                diagnosis: 'التشخيص'
             },
             en: {
                 save: 'Save',
@@ -1326,6 +1493,76 @@
                 withSweets: 'With Sweets',
                 deleteImage: 'Delete Image',
                 downloadPatientFilePDF: 'Download Patient File PDF',
+                modify: 'Modify',
+                saveAll: 'Save All',
+                approve: 'Approve',
+                reject: 'Reject',
+                doctorDiagnosis: 'Doctor Diagnosis',
+                treatmentPlan: 'Treatment Plan',
+                potentialRisks: 'Potential Risks',
+                patientFile: 'Patient File',
+                noData: 'No data',
+                uploadNewImages: 'Upload New Images',
+                selectCategory: 'Select Category',
+                doctorComment: 'Doctor Comment',
+                addComment: 'Add Comment',
+                saveComment: 'Save Comment',
+                deleteComment: 'Delete Comment',
+                editComment: 'Edit Comment',
+                noComments: 'No comments',
+                imagesSaved: 'Images saved',
+                commentSaved: 'Comment saved',
+                commentDeleted: 'Comment deleted',
+                confirmDelete: 'Confirm Delete',
+                areYouSure: 'Are you sure?',
+                yes: 'Yes',
+                no: 'No',
+                success: 'Success',
+                error: 'Error',
+                warning: 'Warning',
+                info: 'Info',
+                loading: 'Loading...',
+                pleaseWait: 'Please wait...',
+                operationSuccessful: 'Operation successful',
+                operationFailed: 'Operation failed',
+                tryAgain: 'Try again',
+                networkError: 'Network error',
+                serverError: 'Server error',
+                unauthorized: 'Unauthorized',
+                forbidden: 'Forbidden',
+                notFound: 'Not found',
+                conflict: 'Conflict',
+                tooManyRequests: 'Too many requests',
+                internalError: 'Internal error',
+                serviceUnavailable: 'Service unavailable',
+                gatewayTimeout: 'Gateway timeout',
+                unknownError: 'Unknown error',
+                // AI Assistant Translations
+                aiAssistant: 'AI Treatment Assistant',
+                aiAssistantDesc: 'Get treatment plan suggestions based on patient symptoms',
+                patientInfo: 'Patient Information',
+                symptoms: 'Symptoms',
+                xrayNotes: 'X-Ray Notes',
+                generatePlan: 'Generate Treatment Plan',
+                generating: 'Generating...',
+                aiResponse: 'AI Response',
+                diagnosisSummary: 'Diagnosis Summary',
+                suggestedTreatment: 'Suggested Treatment Plan',
+                medications: 'Suggested Medications',
+                followupAdvice: 'Follow-up Advice',
+                copyPlan: 'Copy Plan',
+                saveToPatient: 'Save to Patient Record',
+                disclaimer: 'Disclaimer: AI suggestions are for assistance only and should always be reviewed by a qualified dentist.',
+                planSaved: 'Plan saved to patient record',
+                planCopied: 'Plan copied',
+                fillRequiredFields: 'Please fill all required fields',
+                selectPatientFirst: 'Please select a patient first',
+                age: 'Age',
+                gender: 'Gender',
+                male: 'Male',
+                female: 'Female',
+                chiefComplaint: 'Chief Complaint',
+                diagnosis: 'Diagnosis'
             }
         };
         let currentLang = 'ar';
@@ -1384,11 +1621,14 @@
         let patientComments = JSON.parse(localStorage.getItem('dentflow_patientComments')) || {};
         let contracts = JSON.parse(localStorage.getItem('dentflow_contracts')) || {};
         let contractModifyRequests = JSON.parse(localStorage.getItem('dentflow_contractModifyRequests')) || {};
+        let clinicData = JSON.parse(localStorage.getItem('dentflow_clinicData')) || {};
+        let aiTreatmentPlans = JSON.parse(localStorage.getItem('dentflow_aiTreatmentPlans')) || {};
 
         let currentUser = null;
         let selectedPatientForFollowup = null;
         let currentTabIndex = 0;
         let lastQueueDate = localStorage.getItem('dentflow_lastQueueDate') || '';
+        let todayQueueCount = 0;
 
         function saveUsers() { localStorage.setItem('dentflow_users', JSON.stringify(users)); }
         function savePatientsData() { localStorage.setItem('dentflow_patientsData', JSON.stringify(patientsData)); }
@@ -1404,6 +1644,8 @@
         function savePatientComments() { localStorage.setItem('dentflow_patientComments', JSON.stringify(patientComments)); }
         function saveContracts() { localStorage.setItem('dentflow_contracts', JSON.stringify(contracts)); }
         function saveContractModifyRequests() { localStorage.setItem('dentflow_contractModifyRequests', JSON.stringify(contractModifyRequests)); }
+        function saveClinicData() { localStorage.setItem('dentflow_clinicData', JSON.stringify(clinicData)); }
+        function saveAITreatmentPlans() { localStorage.setItem('dentflow_aiTreatmentPlans', JSON.stringify(aiTreatmentPlans)); }
 
         function showLoading() { document.getElementById('loadingOverlay').style.display = 'flex'; }
         function hideLoading() { document.getElementById('loadingOverlay').style.display = 'none'; }
@@ -1563,8 +1805,9 @@
             delete patientImages[uid];
             delete patientComments[uid];
             delete contracts[uid];
+            delete aiTreatmentPlans[uid];
             saveUsers(); savePatientsData(); saveQueue(); saveFollowups(); saveRelations(); saveProfilePics();
-            saveAppointments(); saveInvoices(); saveDentalCharts(); savePatientImages(); savePatientComments(); saveContracts();
+            saveAppointments(); saveInvoices(); saveDentalCharts(); savePatientImages(); savePatientComments(); saveContracts(); saveAITreatmentPlans();
             deleteAccountModal.hide();
             showToast(translations[currentLang].accountDeleted);
             logoutBtn.click();
@@ -1668,6 +1911,7 @@
                     <button class="nav-link" data-bs-toggle="pill" data-bs-target="#invoices"><i class="fas fa-file-invoice"></i> <span data-i18n="invoices">الفواتير</span></button>
                     <button class="nav-link" data-bs-toggle="pill" data-bs-target="#reports"><i class="fas fa-chart-bar"></i> <span data-i18n="reports">التقارير</span></button>
                     <button class="nav-link" data-bs-toggle="pill" data-bs-target="#backup"><i class="fas fa-database"></i> <span data-i18n="backup">النسخ الاحتياطي</span></button>
+                    <button class="nav-link" data-bs-toggle="pill" data-bs-target="#aiAssistant"><i class="fas fa-robot"></i> <span data-i18n="aiAssistant">مساعد الذكاء الاصطناعي</span></button>
                 `;
             } else {
                 nav.innerHTML = `
@@ -1730,7 +1974,7 @@
                     document.getElementById(`tab-${this.dataset.tab}`).classList.add('active');
                     currentTabIndex = i;
                     document.getElementById('prevTab').disabled = currentTabIndex===0;
-                    document.getElementById('nextTab').textContent = currentTabIndex===tabs.length-1 ? (currentLang==='ar'?'حفظ الكل':'Save All') : (currentLang==='ar'?'التالي':'Next');
+                    document.getElementById('nextTab').textContent = currentTabIndex===tabs.length-1 ? (currentLang==='ar'?'حفظ':'Save') : (currentLang==='ar'?'التالي':'Next');
                     window.scrollTo(0, 0);
                 });
             });
@@ -1754,18 +1998,26 @@
                         lastQueueDate = today;
                         localStorage.setItem('dentflow_lastQueueDate', today);
                     }
-                    const taken = queue.filter(q=>q.date===today).map(q=>q.turnNumber);
-                    let newTurn=1; while(taken.includes(newTurn)) newTurn++;
-                    queue.push({patientId:currentUser.id, turnNumber:newTurn, date:today, status:'waiting'});
-                    saveQueue();
-                    document.getElementById('turnNumberValue').textContent = newTurn;
-                    document.getElementById('turnNumberDisplay').style.display = 'block';
+                    
+                    // التحقق من أن المريض يمكنه أخذ دور واحد فقط في اليوم
+                    const existingQueue = queue.filter(q => q.patientId === currentUser.id && q.date === today);
+                    if (existingQueue.length === 0) {
+                        const taken = queue.filter(q => q.date === today).map(q => q.turnNumber);
+                        let newTurn = 1;
+                        while (taken.includes(newTurn)) newTurn++;
+                        queue.push({ patientId: currentUser.id, turnNumber: newTurn, date: today, status: 'waiting' });
+                        saveQueue();
+                        document.getElementById('turnNumberValue').textContent = newTurn;
+                        document.getElementById('turnNumberDisplay').style.display = 'block';
+                    } else {
+                        showToast(currentLang === 'ar' ? 'لقد أخذت دورك بالفعل اليوم' : 'You already have a turn today');
+                    }
                     document.getElementById('nextTab').disabled = true;
                 }
             });
         }
 
-        // دوال التحميل
+        // دوال التحميل مع تنسيق Bold للعناوين وعادي للأسئلة
         function loadPersonalTab() {
             const c = document.getElementById('tab-personal');
             const saved = patientsData[currentUser.id]?.personal || {};
@@ -1774,20 +2026,20 @@
             doctors.forEach(d => opts += `<option value="${d.id}" ${saved.clinicId === d.id ? 'selected' : ''}>${d.name} - ${d.clinic || ''}</option>`);
             c.innerHTML = `
                 <div class="card">
-                    <div class="card-header"><i class="fas fa-id-card"></i> ${translations[currentLang].personalData}</div>
+                    <div class="card-header"><i class="fas fa-id-card"></i> <span class="section-title-bold">${translations[currentLang].personalData}</span></div>
                     <div class="card-body">
                         <div class="row g-4">
                             <div class="col-md-12 text-center mb-3">
                                 <img src="${profilePics[currentUser.id] || 'https://via.placeholder.com/100'}" class="rounded-circle" style="width:100px;height:100px;object-fit:cover;border:3px solid #00cec9;cursor:pointer;" onclick="uploadPicModal.show()">
                                 <p class="mt-2"><small>${currentLang === 'ar' ? 'انقر لتغيير الصورة' : 'Click to change picture'}</small></p>
                             </div>
-                            <div class="col-md-6"><label class="form-label">${currentLang === 'ar' ? 'الاسم الكامل' : 'Full Name'}</label><input type="text" class="form-control" value="${currentUser.name}" readonly></div>
-                            <div class="col-md-3"><label class="form-label">${currentLang === 'ar' ? 'العمر' : 'Age'}</label><input type="number" class="form-control" id="patientAge" value="${saved.age || ''}" min="0" max="120"></div>
-                            <div class="col-md-3"><label class="form-label">${currentLang === 'ar' ? 'النوع' : 'Gender'}</label><select class="form-select" id="patientGender"><option ${saved.gender === (currentLang==='ar'?'ذكر':'Male') ? 'selected' : ''}>${currentLang==='ar'?'ذكر':'Male'}</option><option ${saved.gender === (currentLang==='ar'?'أنثى':'Female') ? 'selected' : ''}>${currentLang==='ar'?'أنثى':'Female'}</option></select></div>
-                            <div class="col-md-6"><label class="form-label">${currentLang === 'ar' ? 'المهنة' : 'Occupation'}</label><input type="text" class="form-control" id="patientJob" value="${saved.job || ''}"></div>
-                            <div class="col-md-6"><label class="form-label">${currentLang === 'ar' ? 'العنوان' : 'Address'}</label><input type="text" class="form-control" id="patientAddress" value="${saved.address || ''}"></div>
-                            <div class="col-md-6"><label class="form-label">${currentLang === 'ar' ? 'رقم الهاتف' : 'Phone'}</label><input type="tel" class="form-control" id="patientPhone" value="${saved.phone || ''}" pattern="[0-9]{10,15}"></div>
-                            <div class="col-md-6"><label class="form-label">${currentLang === 'ar' ? 'العيادة المتابع معها' : 'Clinic'}</label><select class="form-select custom-select" id="patientClinic">${opts}</select></div>
+                            <div class="col-md-6"><label class="form-label section-content-light">${currentLang === 'ar' ? 'الاسم الكامل' : 'Full Name'}</label><input type="text" class="form-control" value="${currentUser.name}" readonly></div>
+                            <div class="col-md-3"><label class="form-label section-content-light">${currentLang === 'ar' ? 'العمر' : 'Age'}</label><input type="number" class="form-control" id="patientAge" value="${saved.age || ''}" min="0" max="120"></div>
+                            <div class="col-md-3"><label class="form-label section-content-light">${currentLang === 'ar' ? 'النوع' : 'Gender'}</label><select class="form-select" id="patientGender"><option ${saved.gender === (currentLang==='ar'?'ذكر':'Male') ? 'selected' : ''}>${currentLang==='ar'?'ذكر':'Male'}</option><option ${saved.gender === (currentLang==='ar'?'أنثى':'Female') ? 'selected' : ''}>${currentLang==='ar'?'أنثى':'Female'}</option></select></div>
+                            <div class="col-md-6"><label class="form-label section-content-light">${currentLang === 'ar' ? 'المهنة' : 'Occupation'}</label><input type="text" class="form-control" id="patientJob" value="${saved.job || ''}"></div>
+                            <div class="col-md-6"><label class="form-label section-content-light">${currentLang === 'ar' ? 'العنوان' : 'Address'}</label><input type="text" class="form-control" id="patientAddress" value="${saved.address || ''}"></div>
+                            <div class="col-md-6"><label class="form-label section-content-light">${currentLang === 'ar' ? 'رقم الهاتف' : 'Phone'}</label><input type="tel" class="form-control" id="patientPhone" value="${saved.phone || ''}" pattern="[0-9]{10,15}"></div>
+                            <div class="col-md-6"><label class="form-label section-content-light">${currentLang === 'ar' ? 'العيادة المتابع معها' : 'Clinic'}</label><select class="form-select custom-select" id="patientClinic">${opts}</select></div>
                         </div>
                         <button class="btn btn-primary mt-3 save-tab-btn" id="savePersonal">${translations[currentLang].save}</button>
                     </div>
@@ -1821,70 +2073,70 @@
             const s = patientsData[currentUser.id]?.medical || {};
             c.innerHTML = `
                 <div class="card">
-                    <div class="card-header"><i class="fas fa-heartbeat"></i> ${translations[currentLang].medicalHistory}</div>
+                    <div class="card-header"><i class="fas fa-heartbeat"></i> <span class="section-title-bold">${translations[currentLang].medicalHistory}</span></div>
                     <div class="card-body">
                         <div class="question-item">
-                            <label class="form-label">${currentLang === 'ar' ? 'هل تعاني أو عانيت سابقًا من أي من الأمراض التالية؟' : 'Do you suffer or have you suffered from any of the following diseases?'}</label>
+                            <label class="form-label section-content-light">${currentLang === 'ar' ? 'هل تعاني أو عانيت سابقًا من أي من الأمراض التالية؟' : 'Do you suffer or have you suffered from any of the following diseases?'}</label>
                             <div class="row">
                                 <div class="col-md-6">
-                                    <div class="form-check"><input class="form-check-input" type="checkbox" id="diseaseHeart" ${s.heart ? 'checked' : ''}><label class="form-check-label">${currentLang==='ar'?'أمراض القلب':'Heart disease'}</label></div>
-                                    <div class="form-check"><input class="form-check-input" type="checkbox" id="diseasePressure" ${s.pressure ? 'checked' : ''}><label>${currentLang==='ar'?'ارتفاع ضغط الدم':'High blood pressure'}</label></div>
-                                    <div class="form-check"><input class="form-check-input" type="checkbox" id="diseaseDiabetes" ${s.diabetes ? 'checked' : ''}><label>${currentLang==='ar'?'مرض السكري':'Diabetes'}</label></div>
-                                    <div class="form-check"><input class="form-check-input" type="checkbox" id="diseaseAsthma" ${s.asthma ? 'checked' : ''}><label>${currentLang==='ar'?'الربو':'Asthma'}</label></div>
-                                    <div class="form-check"><input class="form-check-input" type="checkbox" id="diseaseLiver" ${s.liver ? 'checked' : ''}><label>${currentLang==='ar'?'أمراض الكبد':'Liver disease'}</label></div>
+                                    <div class="form-check"><input class="form-check-input" type="checkbox" id="diseaseHeart" ${s.heart ? 'checked' : ''}><label class="form-check-label section-content-light">${currentLang==='ar'?'أمراض القلب':'Heart disease'}</label></div>
+                                    <div class="form-check"><input class="form-check-input" type="checkbox" id="diseasePressure" ${s.pressure ? 'checked' : ''}><label class="section-content-light">${currentLang==='ar'?'ارتفاع ضغط الدم':'High blood pressure'}</label></div>
+                                    <div class="form-check"><input class="form-check-input" type="checkbox" id="diseaseDiabetes" ${s.diabetes ? 'checked' : ''}><label class="section-content-light">${currentLang==='ar'?'مرض السكري':'Diabetes'}</label></div>
+                                    <div class="form-check"><input class="form-check-input" type="checkbox" id="diseaseAsthma" ${s.asthma ? 'checked' : ''}><label class="section-content-light">${currentLang==='ar'?'الربو':'Asthma'}</label></div>
+                                    <div class="form-check"><input class="form-check-input" type="checkbox" id="diseaseLiver" ${s.liver ? 'checked' : ''}><label class="section-content-light">${currentLang==='ar'?'أمراض الكبد':'Liver disease'}</label></div>
                                 </div>
                                 <div class="col-md-6">
-                                    <div class="form-check"><input class="form-check-input" type="checkbox" id="diseaseKidney" ${s.kidney ? 'checked' : ''}><label>${currentLang==='ar'?'أمراض الكلى':'Kidney disease'}</label></div>
-                                    <div class="form-check"><input class="form-check-input" type="checkbox" id="diseaseEpilepsy" ${s.epilepsy ? 'checked' : ''}><label>${currentLang==='ar'?'الصرع':'Epilepsy'}</label></div>
-                                    <div class="form-check"><input class="form-check-input" type="checkbox" id="diseaseThyroid" ${s.thyroid ? 'checked' : ''}><label>${currentLang==='ar'?'اضطرابات الغدة الدرقية':'Thyroid disorders'}</label></div>
-                                    <div class="form-check"><input class="form-check-input" type="checkbox" id="diseaseHepatitis" ${s.hepatitis ? 'checked' : ''}><label>${currentLang==='ar'?'التهاب الكبد الوبائي':'Hepatitis'}</label></div>
-                                    <div class="form-check"><input class="form-check-input" type="checkbox" id="diseaseBleeding" ${s.bleeding ? 'checked' : ''}><label>${currentLang==='ar'?'اضطرابات النزيف':'Bleeding disorders'}</label></div>
+                                    <div class="form-check"><input class="form-check-input" type="checkbox" id="diseaseKidney" ${s.kidney ? 'checked' : ''}><label class="section-content-light">${currentLang==='ar'?'أمراض الكلى':'Kidney disease'}</label></div>
+                                    <div class="form-check"><input class="form-check-input" type="checkbox" id="diseaseEpilepsy" ${s.epilepsy ? 'checked' : ''}><label class="section-content-light">${currentLang==='ar'?'الصرع':'Epilepsy'}</label></div>
+                                    <div class="form-check"><input class="form-check-input" type="checkbox" id="diseaseThyroid" ${s.thyroid ? 'checked' : ''}><label class="section-content-light">${currentLang==='ar'?'اضطرابات الغدة الدرقية':'Thyroid disorders'}</label></div>
+                                    <div class="form-check"><input class="form-check-input" type="checkbox" id="diseaseHepatitis" ${s.hepatitis ? 'checked' : ''}><label class="section-content-light">${currentLang==='ar'?'التهاب الكبد الوبائي':'Hepatitis'}</label></div>
+                                    <div class="form-check"><input class="form-check-input" type="checkbox" id="diseaseBleeding" ${s.bleeding ? 'checked' : ''}><label class="section-content-light">${currentLang==='ar'?'اضطرابات النزيف':'Bleeding disorders'}</label></div>
                                 </div>
                             </div>
                             <div class="mt-2">
-                                <label class="form-label">${currentLang === 'ar' ? 'أمراض أخرى:' : 'Other diseases:'}</label>
+                                <label class="form-label section-content-light">${currentLang === 'ar' ? 'أمراض أخرى:' : 'Other diseases:'}</label>
                                 <input type="text" class="form-control" id="otherDiseases" value="${s.otherDiseases || ''}">
                             </div>
                         </div>
                         <div class="question-item">
-                            <label class="form-label">${currentLang === 'ar' ? 'هل تتناول أي أدوية حاليًا؟' : 'Do you take any medications currently?'}</label>
+                            <label class="form-label section-content-light">${currentLang === 'ar' ? 'هل تتناول أي أدوية حاليًا؟' : 'Do you take any medications currently?'}</label>
                             <div class="d-flex gap-4">
-                                <div class="form-check"><input class="form-check-input" type="radio" name="meds" value="yes" ${s.meds === 'yes' ? 'checked' : ''}><label>${currentLang==='ar'?'نعم':'Yes'}</label></div>
-                                <div class="form-check"><input class="form-check-input" type="radio" name="meds" value="no" ${s.meds === 'no' ? 'checked' : ''}><label>${currentLang==='ar'?'لا':'No'}</label></div>
+                                <div class="form-check"><input class="form-check-input" type="radio" name="meds" value="yes" ${s.meds === 'yes' ? 'checked' : ''}><label class="section-content-light">${currentLang==='ar'?'نعم':'Yes'}</label></div>
+                                <div class="form-check"><input class="form-check-input" type="radio" name="meds" value="no" ${s.meds === 'no' ? 'checked' : ''}><label class="section-content-light">${currentLang==='ar'?'لا':'No'}</label></div>
                             </div>
                             <div id="medsDetailsDiv" style="${s.meds === 'yes' ? 'display:block' : 'display:none'}; margin-top:10px;">
                                 <input type="text" class="form-control" id="medsDetails" placeholder="${currentLang==='ar'?'اذكر الأدوية':'List medications'}" value="${s.medsDetails || ''}">
                             </div>
                         </div>
                         <div class="question-item">
-                            <label class="form-label">${currentLang === 'ar' ? 'هل لديك حساسية من أدوية أو مواد طبية؟' : 'Do you have any allergies to medications or medical materials?'}</label>
+                            <label class="form-label section-content-light">${currentLang === 'ar' ? 'هل لديك حساسية من أدوية أو مواد طبية؟' : 'Do you have any allergies to medications or medical materials?'}</label>
                             <div class="d-flex gap-4">
-                                <div class="form-check"><input class="form-check-input" type="radio" name="allergy" value="yes" ${s.allergy === 'yes' ? 'checked' : ''}><label>${currentLang==='ar'?'نعم':'Yes'}</label></div>
-                                <div class="form-check"><input class="form-check-input" type="radio" name="allergy" value="no" ${s.allergy === 'no' ? 'checked' : ''}><label>${currentLang==='ar'?'لا':'No'}</label></div>
+                                <div class="form-check"><input class="form-check-input" type="radio" name="allergy" value="yes" ${s.allergy === 'yes' ? 'checked' : ''}><label class="section-content-light">${currentLang==='ar'?'نعم':'Yes'}</label></div>
+                                <div class="form-check"><input class="form-check-input" type="radio" name="allergy" value="no" ${s.allergy === 'no' ? 'checked' : ''}><label class="section-content-light">${currentLang==='ar'?'لا':'No'}</label></div>
                             </div>
                             <div id="allergyDetailsDiv" style="${s.allergy === 'yes' ? 'display:block' : 'display:none'}; margin-top:10px;">
                                 <input type="text" class="form-control" id="allergyDetails" placeholder="${currentLang==='ar'?'اذكر المواد المسببة':'List allergens'}" value="${s.allergyDetails || ''}">
                             </div>
                         </div>
                         <div class="question-item">
-                            <label class="form-label">${currentLang === 'ar' ? 'هل سبق لك دخول المستشفى أو إجراء عملية جراحية؟' : 'Have you ever been hospitalized or had surgery?'}</label>
+                            <label class="form-label section-content-light">${currentLang === 'ar' ? 'هل سبق لك دخول المستشفى أو إجراء عملية جراحية؟' : 'Have you ever been hospitalized or had surgery?'}</label>
                             <div class="d-flex gap-4">
-                                <div class="form-check"><input class="form-check-input" type="radio" name="surgery" value="yes" ${s.surgery === 'yes' ? 'checked' : ''}><label>${currentLang==='ar'?'نعم':'Yes'}</label></div>
-                                <div class="form-check"><input class="form-check-input" type="radio" name="surgery" value="no" ${s.surgery === 'no' ? 'checked' : ''}><label>${currentLang==='ar'?'لا':'No'}</label></div>
+                                <div class="form-check"><input class="form-check-input" type="radio" name="surgery" value="yes" ${s.surgery === 'yes' ? 'checked' : ''}><label class="section-content-light">${currentLang==='ar'?'نعم':'Yes'}</label></div>
+                                <div class="form-check"><input class="form-check-input" type="radio" name="surgery" value="no" ${s.surgery === 'no' ? 'checked' : ''}><label class="section-content-light">${currentLang==='ar'?'لا':'No'}</label></div>
                             </div>
                             <div id="surgeryDetailsDiv" style="${s.surgery === 'yes' ? 'display:block' : 'display:none'}; margin-top:10px;">
                                 <input type="text" class="form-control" id="surgeryDetails" placeholder="${currentLang==='ar'?'اشرح':'Explain'}" value="${s.surgeryDetails || ''}">
                             </div>
                         </div>
                         <div class="question-item">
-                            <label class="form-label">${currentLang === 'ar' ? 'للنساء: هل يوجد حمل حاليًا؟' : 'For women: Are you currently pregnant?'}</label>
+                            <label class="form-label section-content-light">${currentLang === 'ar' ? 'للنساء: هل يوجد حمل حاليًا؟' : 'For women: Are you currently pregnant?'}</label>
                             <div class="d-flex gap-4">
-                                <div class="form-check"><input class="form-check-input" type="radio" name="pregnant" value="yes" ${s.pregnant === 'yes' ? 'checked' : ''}><label>${currentLang==='ar'?'نعم':'Yes'}</label></div>
-                                <div class="form-check"><input class="form-check-input" type="radio" name="pregnant" value="no" ${s.pregnant === 'no' ? 'checked' : ''}><label>${currentLang==='ar'?'لا':'No'}</label></div>
-                                <div class="form-check"><input class="form-check-input" type="radio" name="pregnant" value="na" ${s.pregnant === 'na' ? 'checked' : ''}><label>${currentLang==='ar'?'لا ينطبق':'N/A'}</label></div>
+                                <div class="form-check"><input class="form-check-input" type="radio" name="pregnant" value="yes" ${s.pregnant === 'yes' ? 'checked' : ''}><label class="section-content-light">${currentLang==='ar'?'نعم':'Yes'}</label></div>
+                                <div class="form-check"><input class="form-check-input" type="radio" name="pregnant" value="no" ${s.pregnant === 'no' ? 'checked' : ''}><label class="section-content-light">${currentLang==='ar'?'لا':'No'}</label></div>
+                                <div class="form-check"><input class="form-check-input" type="radio" name="pregnant" value="na" ${s.pregnant === 'na' ? 'checked' : ''}><label class="section-content-light">${currentLang==='ar'?'لا ينطبق':'N/A'}</label></div>
                             </div>
                             <div id="pregnancyWeeksDiv" style="${s.pregnant === 'yes' ? 'display:block' : 'display:none'}; margin-top:10px;">
-                                <label class="form-label">${currentLang==='ar'?'عدد أسابيع الحمل:':'Weeks of pregnancy:'}</label>
+                                <label class="form-label section-content-light">${currentLang==='ar'?'عدد أسابيع الحمل:':'Weeks of pregnancy:'}</label>
                                 <input type="number" class="form-control" id="pregnancyWeeks" min="1" max="42" value="${s.pregnancyWeeks || ''}">
                             </div>
                         </div>
@@ -1938,51 +2190,51 @@
             const s = patientsData[currentUser.id]?.dental || {};
             c.innerHTML = `
                 <div class="card">
-                    <div class="card-header"><i class="fas fa-tooth"></i> ${translations[currentLang].dentalHistory}</div>
+                    <div class="card-header"><i class="fas fa-tooth"></i> <span class="section-title-bold">${translations[currentLang].dentalHistory}</span></div>
                     <div class="card-body">
                         <div class="question-item">
-                            <label class="form-label">${currentLang === 'ar' ? 'متى كانت آخر زيارة لطبيب الأسنان؟' : 'When was your last dental visit?'}</label>
+                            <label class="form-label section-content-light">${currentLang === 'ar' ? 'متى كانت آخر زيارة لطبيب الأسنان؟' : 'When was your last dental visit?'}</label>
                             <input type="text" class="form-control" id="lastVisit" value="${s.lastVisit || ''}">
                         </div>
                         <div class="question-item">
-                            <label class="form-label">${currentLang === 'ar' ? 'هل تعاني من أي من الأعراض التالية؟' : 'Do you have any of the following symptoms?'}</label>
+                            <label class="form-label section-content-light">${currentLang === 'ar' ? 'هل تعاني من أي من الأعراض التالية؟' : 'Do you have any of the following symptoms?'}</label>
                             <div class="row">
                                 <div class="col-md-6">
-                                    <div class="form-check"><input class="form-check-input" type="checkbox" id="symptomPain" ${s.symptomPain ? 'checked' : ''}><label>${currentLang==='ar'?'ألم في الأسنان':'Tooth pain'}</label></div>
-                                    <div class="form-check"><input class="form-check-input" type="checkbox" id="symptomBleeding" ${s.symptomBleeding ? 'checked' : ''}><label>${currentLang==='ar'?'نزيف في اللثة':'Bleeding gums'}</label></div>
-                                    <div class="form-check"><input class="form-check-input" type="checkbox" id="symptomBadBreath" ${s.symptomBadBreath ? 'checked' : ''}><label>${currentLang==='ar'?'رائحة فم كريهة':'Bad breath'}</label></div>
-                                    <div class="form-check"><input class="form-check-input" type="checkbox" id="symptomSensitivity" ${s.symptomSensitivity ? 'checked' : ''}><label>${currentLang==='ar'?'حساسية من البارد أو الساخن':'Sensitivity to hot/cold'}</label></div>
+                                    <div class="form-check"><input class="form-check-input" type="checkbox" id="symptomPain" ${s.symptomPain ? 'checked' : ''}><label class="section-content-light">${currentLang==='ar'?'ألم في الأسنان':'Tooth pain'}</label></div>
+                                    <div class="form-check"><input class="form-check-input" type="checkbox" id="symptomBleeding" ${s.symptomBleeding ? 'checked' : ''}><label class="section-content-light">${currentLang==='ar'?'نزيف في اللثة':'Bleeding gums'}</label></div>
+                                    <div class="form-check"><input class="form-check-input" type="checkbox" id="symptomBadBreath" ${s.symptomBadBreath ? 'checked' : ''}><label class="section-content-light">${currentLang==='ar'?'رائحة فم كريهة':'Bad breath'}</label></div>
+                                    <div class="form-check"><input class="form-check-input" type="checkbox" id="symptomSensitivity" ${s.symptomSensitivity ? 'checked' : ''}><label class="section-content-light">${currentLang==='ar'?'حساسية من البارد أو الساخن':'Sensitivity to hot/cold'}</label></div>
                                 </div>
                                 <div class="col-md-6">
-                                    <div class="form-check"><input class="form-check-input" type="checkbox" id="symptomChewing" ${s.symptomChewing ? 'checked' : ''}><label>${currentLang==='ar'?'صعوبة في المضغ':'Difficulty chewing'}</label></div>
-                                    <div class="form-check"><input class="form-check-input" type="checkbox" id="symptomJaw" ${s.symptomJaw ? 'checked' : ''}><label>${currentLang==='ar'?'ألم في مفصل الفك':'Jaw pain'}</label></div>
-                                    <div class="form-check"><input class="form-check-input" type="checkbox" id="symptomGrinding" ${s.symptomGrinding ? 'checked' : ''}><label>${currentLang==='ar'?'صرير الأسنان':'Teeth grinding'}</label></div>
+                                    <div class="form-check"><input class="form-check-input" type="checkbox" id="symptomChewing" ${s.symptomChewing ? 'checked' : ''}><label class="section-content-light">${currentLang==='ar'?'صعوبة في المضغ':'Difficulty chewing'}</label></div>
+                                    <div class="form-check"><input class="form-check-input" type="checkbox" id="symptomJaw" ${s.symptomJaw ? 'checked' : ''}><label class="section-content-light">${currentLang==='ar'?'ألم في مفصل الفك':'Jaw pain'}</label></div>
+                                    <div class="form-check"><input class="form-check-input" type="checkbox" id="symptomGrinding" ${s.symptomGrinding ? 'checked' : ''}><label class="section-content-light">${currentLang==='ar'?'صرير الأسنان':'Teeth grinding'}</label></div>
                                 </div>
                             </div>
                         </div>
                         <div class="question-item">
-                            <label class="form-label">${currentLang === 'ar' ? 'هل تنزف لثتك أثناء تنظيف الأسنان؟' : 'Do your gums bleed when brushing?'}</label>
+                            <label class="form-label section-content-light">${currentLang === 'ar' ? 'هل تنزف لثتك أثناء تنظيف الأسنان؟' : 'Do your gums bleed when brushing?'}</label>
                             <div class="d-flex gap-4">
-                                <div class="form-check"><input class="form-check-input" type="radio" name="gumBleed" value="yes" ${s.gumBleed === 'yes' ? 'checked' : ''}><label>${currentLang==='ar'?'نعم':'Yes'}</label></div>
-                                <div class="form-check"><input class="form-check-input" type="radio" name="gumBleed" value="no" ${s.gumBleed === 'no' ? 'checked' : ''}><label>${currentLang==='ar'?'لا':'No'}</label></div>
+                                <div class="form-check"><input class="form-check-input" type="radio" name="gumBleed" value="yes" ${s.gumBleed === 'yes' ? 'checked' : ''}><label class="section-content-light">${currentLang==='ar'?'نعم':'Yes'}</label></div>
+                                <div class="form-check"><input class="form-check-input" type="radio" name="gumBleed" value="no" ${s.gumBleed === 'no' ? 'checked' : ''}><label class="section-content-light">${currentLang==='ar'?'لا':'No'}</label></div>
                             </div>
                         </div>
                         <div class="question-item">
-                            <label class="form-label">${currentLang === 'ar' ? 'هل سبق لك إجراء أي من العلاجات التالية؟' : 'Have you ever had any of the following treatments?'}</label>
+                            <label class="form-label section-content-light">${currentLang === 'ar' ? 'هل سبق لك إجراء أي من العلاجات التالية؟' : 'Have you ever had any of the following treatments?'}</label>
                             <div class="row">
                                 <div class="col-md-6">
-                                    <div class="form-check"><input class="form-check-input" type="checkbox" id="prevOrtho" ${s.prevOrtho ? 'checked' : ''}><label>${currentLang==='ar'?'تقويم الأسنان':'Orthodontics'}</label></div>
-                                    <div class="form-check"><input class="form-check-input" type="checkbox" id="prevRoot" ${s.prevRoot ? 'checked' : ''}><label>${currentLang==='ar'?'حشو عصب':'Root canal'}</label></div>
-                                    <div class="form-check"><input class="form-check-input" type="checkbox" id="prevImplant" ${s.prevImplant ? 'checked' : ''}><label>${currentLang==='ar'?'زراعة الأسنان':'Dental implant'}</label></div>
+                                    <div class="form-check"><input class="form-check-input" type="checkbox" id="prevOrtho" ${s.prevOrtho ? 'checked' : ''}><label class="section-content-light">${currentLang==='ar'?'تقويم الأسنان':'Orthodontics'}</label></div>
+                                    <div class="form-check"><input class="form-check-input" type="checkbox" id="prevRoot" ${s.prevRoot ? 'checked' : ''}><label class="section-content-light">${currentLang==='ar'?'حشو عصب':'Root canal'}</label></div>
+                                    <div class="form-check"><input class="form-check-input" type="checkbox" id="prevImplant" ${s.prevImplant ? 'checked' : ''}><label class="section-content-light">${currentLang==='ar'?'زراعة الأسنان':'Dental implant'}</label></div>
                                 </div>
                                 <div class="col-md-6">
-                                    <div class="form-check"><input class="form-check-input" type="checkbox" id="prevCrown" ${s.prevCrown ? 'checked' : ''}><label>${currentLang==='ar'?'تيجان أو جسور':'Crowns/bridges'}</label></div>
-                                    <div class="form-check"><input class="form-check-input" type="checkbox" id="prevDenture" ${s.prevDenture ? 'checked' : ''}><label>${currentLang==='ar'?'أطقم أسنان':'Dentures'}</label></div>
+                                    <div class="form-check"><input class="form-check-input" type="checkbox" id="prevCrown" ${s.prevCrown ? 'checked' : ''}><label class="section-content-light">${currentLang==='ar'?'تيجان أو جسور':'Crowns/bridges'}</label></div>
+                                    <div class="form-check"><input class="form-check-input" type="checkbox" id="prevDenture" ${s.prevDenture ? 'checked' : ''}><label class="section-content-light">${currentLang==='ar'?'أطقم أسنان':'Dentures'}</label></div>
                                 </div>
                             </div>
                         </div>
                         <div class="question-item">
-                            <label class="form-label">${currentLang === 'ar' ? 'سبب الزيارة اليوم (وصف مختصر):' : 'Reason for today\'s visit (brief description):'}</label>
+                            <label class="form-label section-content-light">${currentLang === 'ar' ? 'سبب الزيارة اليوم (وصف مختصر):' : 'Reason for today\'s visit (brief description):'}</label>
                             <textarea class="form-control" id="visitReason" rows="3">${s.visitReason || ''}</textarea>
                         </div>
                         <button class="btn btn-primary save-tab-btn" id="saveDental">${translations[currentLang].save}</button>
@@ -2014,20 +2266,19 @@
             });
         }
 
-        // تعديل دالة سبب الزيارة حسب المتطلبات الجديدة
         function loadReasonTab() {
             const c = document.getElementById('tab-reason');
             const s = patientsData[currentUser.id]?.reason || {};
             c.innerHTML = `
                 <div class="card">
-                    <div class="card-header"><i class="fas fa-notes-medical"></i> ${translations[currentLang].reasonForVisit}</div>
+                    <div class="card-header"><i class="fas fa-notes-medical"></i> <span class="section-title-bold">${translations[currentLang].reasonForVisit}</span></div>
                     <div class="card-body">
                         <div class="question-item">
-                            <label class="form-label"><i class="fas fa-edit"></i> ${currentLang === 'ar' ? 'الشكوى الرئيسية' : 'Main Complaint'}</label>
+                            <label class="form-label section-content-light"><i class="fas fa-edit"></i> ${currentLang === 'ar' ? 'الشكوى الرئيسية' : 'Main Complaint'}</label>
                             <textarea class="form-control" id="mainComplaint" rows="3">${s.mainComplaint || ''}</textarea>
                         </div>
                         <div class="question-item">
-                            <label class="form-label"><i class="fas fa-clock"></i> ${currentLang === 'ar' ? 'مدة الألم' : 'Pain duration'}</label>
+                            <label class="form-label section-content-light"><i class="fas fa-clock"></i> ${currentLang === 'ar' ? 'مدة الألم' : 'Pain duration'}</label>
                             <select class="form-select" id="painDuration">
                                 <option ${s.painDuration === (currentLang==='ar'?'أقل من يوم':'Less than a day') ? 'selected' : ''}>${currentLang==='ar'?'أقل من يوم':'Less than a day'}</option>
                                 <option ${s.painDuration === (currentLang==='ar'?'1-3 أيام':'1-3 days') ? 'selected' : ''}>${currentLang==='ar'?'1-3 أيام':'1-3 days'}</option>
@@ -2036,7 +2287,7 @@
                             </select>
                         </div>
                         <div class="question-item">
-                            <label class="form-label"><i class="fas fa-bolt"></i> ${currentLang === 'ar' ? 'نوع الألم' : 'Pain type'}</label>
+                            <label class="form-label section-content-light"><i class="fas fa-bolt"></i> ${currentLang === 'ar' ? 'نوع الألم' : 'Pain type'}</label>
                             <select class="form-select" id="painType">
                                 <option ${s.painType === (currentLang==='ar'?'حاد':'Sharp') ? 'selected' : ''}>${currentLang==='ar'?'حاد':'Sharp'}</option>
                                 <option ${s.painType === (currentLang==='ar'?'نابض':'Throbbing') ? 'selected' : ''}>${currentLang==='ar'?'نابض':'Throbbing'}</option>
@@ -2044,12 +2295,12 @@
                             </select>
                         </div>
                         <div class="question-item">
-                            <label class="form-label"><i class="fas fa-chart-line"></i> ${currentLang === 'ar' ? 'شدة الألم (1-10)' : 'Pain intensity (1-10)'}</label>
+                            <label class="form-label section-content-light"><i class="fas fa-chart-line"></i> ${currentLang === 'ar' ? 'شدة الألم (1-10)' : 'Pain intensity (1-10)'}</label>
                             <input type="range" class="form-range" id="painRange" min="1" max="10" value="${s.painIntensity || 5}">
                             <div class="text-center" id="painValue">${s.painIntensity || 5}</div>
                         </div>
                         <div class="question-item">
-                            <label class="form-label"><i class="fas fa-hand-holding-heart"></i> ${currentLang === 'ar' ? 'هل يحدث مع محفز؟' : 'Triggered by?'}</label>
+                            <label class="form-label section-content-light"><i class="fas fa-hand-holding-heart"></i> ${currentLang === 'ar' ? 'هل يحدث مع محفز؟' : 'Triggered by?'}</label>
                             <select class="form-select" id="painTrigger">
                                 <option ${s.painTrigger === (currentLang==='ar'?'بدون محفز':'None') ? 'selected' : ''}>${currentLang==='ar'?'بدون محفز':'None'}</option>
                                 <option ${s.painTrigger === (currentLang==='ar'?'مع البارد':'Cold') ? 'selected' : ''}>${currentLang==='ar'?'مع البارد':'Cold'}</option>
@@ -2058,7 +2309,7 @@
                             </select>
                         </div>
                         <div class="question-item">
-                            <label class="form-label"><i class="fas fa-hourglass-half"></i> ${translations[currentLang].painDurationAfterTrigger}</label>
+                            <label class="form-label section-content-light"><i class="fas fa-hourglass-half"></i> ${translations[currentLang].painDurationAfterTrigger}</label>
                             <select class="form-select" id="painDurationAfterTrigger">
                                 <option value="instantly" ${s.painDurationAfterTrigger === 'instantly' ? 'selected' : ''}>${translations[currentLang].instantly}</option>
                                 <option value="3to5" ${s.painDurationAfterTrigger === '3to5' ? 'selected' : ''}>${translations[currentLang].threeToFiveSeconds}</option>
@@ -2067,7 +2318,7 @@
                             </select>
                         </div>
                         <div class="question-item">
-                            <label class="form-label"><i class="fas fa-x-ray"></i> ${currentLang === 'ar' ? 'صورة الأشعة (X-ray):' : 'X-ray image:'}</label>
+                            <label class="form-label section-content-light"><i class="fas fa-x-ray"></i> ${currentLang === 'ar' ? 'صورة الأشعة (X-ray):' : 'X-ray image:'}</label>
                             <input type="file" id="xrayUpload" accept="image/*" class="form-control">
                             <div id="xrayPreview" class="mt-2">
                                 ${patientsData[currentUser.id]?.xray ? `<img src="${patientsData[currentUser.id].xray}" class="xray-preview">` : ''}
@@ -2113,9 +2364,9 @@
             const c = document.getElementById('tab-followup');
             c.innerHTML = `
                 <div class="card">
-                    <div class="card-header"><i class="fas fa-calendar-check"></i> ${currentLang === 'ar' ? 'نصائح ما بعد العلاج' : 'Post-treatment tips'}</div>
+                    <div class="card-header"><i class="fas fa-calendar-check"></i> <span class="section-title-bold">${currentLang === 'ar' ? 'نصائح ما بعد العلاج' : 'Post-treatment tips'}</span></div>
                     <div class="card-body">
-                        <label class="form-label">${currentLang === 'ar' ? 'اختر نوع العلاج:' : 'Select treatment type:'}</label>
+                        <label class="form-label section-content-light">${currentLang === 'ar' ? 'اختر نوع العلاج:' : 'Select treatment type:'}</label>
                         <select class="form-select mb-4" id="treatmentTypeSelect">
                             <option value="filling">${currentLang==='ar'?'حشو عادي':'Filling'}</option>
                             <option value="rootcanal">${currentLang==='ar'?'حشو عصب':'Root canal'}</option>
@@ -2143,9 +2394,9 @@
             const saved = patientsData[currentUser.id]?.treatmentPlan || '';
             c.innerHTML = `
                 <div class="card">
-                    <div class="card-header"><i class="fas fa-notes-medical"></i> ${translations[currentLang].treatmentPlan}</div>
+                    <div class="card-header"><i class="fas fa-notes-medical"></i> <span class="section-title-bold">${translations[currentLang].treatmentPlan}</span></div>
                     <div class="card-body">
-                        <p>${saved || (currentLang==='ar'?'لا توجد خطة علاج بعد':'No treatment plan yet')}</p>
+                        <p class="section-content-light">${saved || (currentLang==='ar'?'لا توجد خطة علاج بعد':'No treatment plan yet')}</p>
                     </div>
                 </div>
             `;
@@ -2155,20 +2406,20 @@
             const c = document.getElementById('tab-faq');
             c.innerHTML = `
                 <div class="card">
-                    <div class="card-header"><i class="fas fa-question-circle"></i> ${translations[currentLang].faq}</div>
+                    <div class="card-header"><i class="fas fa-question-circle"></i> <span class="section-title-bold">${translations[currentLang].faq}</span></div>
                     <div class="card-body">
                         <div class="accordion" id="faqAccordion">
                             <div class="accordion-item">
                                 <h2 class="accordion-header"><button class="accordion-button" data-bs-toggle="collapse" data-bs-target="#faq1">${currentLang==='ar'?'كم يستمر الألم بعد الحشو العادي؟':'How long does pain last after a filling?'}</button></h2>
-                                <div id="faq1" class="accordion-collapse collapse show"><div class="accordion-body">${currentLang==='ar'?'24-48 ساعة، إذا زاد عن 3 أيام اتصل بالطبيب.':'24-48 hours; if it lasts more than 3 days, contact your doctor.'}</div></div>
+                                <div id="faq1" class="accordion-collapse collapse show"><div class="accordion-body section-content-light">${currentLang==='ar'?'24-48 ساعة، إذا زاد عن 3 أيام اتصل بالطبيب.':'24-48 hours; if it lasts more than 3 days, contact your doctor.'}</div></div>
                             </div>
                             <div class="accordion-item">
                                 <h2 class="accordion-header"><button class="accordion-button collapsed" data-bs-toggle="collapse" data-bs-target="#faq2">${currentLang==='ar'?'متى يمكن الأكل بعد الخلع؟':'When can I eat after an extraction?'}</button></h2>
-                                <div id="faq2" class="accordion-collapse collapse"><div class="accordion-body">${currentLang==='ar'?'بعد ساعتين، تجنب الأكل على جهة الخلع.':'After two hours, avoid eating on the extraction side.'}</div></div>
+                                <div id="faq2" class="accordion-collapse collapse"><div class="accordion-body section-content-light">${currentLang==='ar'?'بعد ساعتين، تجنب الأكل على جهة الخلع.':'After two hours, avoid eating on the extraction side.'}</div></div>
                             </div>
                             <div class="accordion-item">
                                 <h2 class="accordion-header"><button class="accordion-button collapsed" data-bs-toggle="collapse" data-bs-target="#faq3">${currentLang==='ar'?'هل التبييض مؤلم؟':'Is teeth whitening painful?'}</button></h2>
-                                <div id="faq3" class="accordion-collapse collapse"><div class="accordion-body">${currentLang==='ar'?'قد يسبب حساسية مؤقتة.':'May cause temporary sensitivity.'}</div></div>
+                                <div id="faq3" class="accordion-collapse collapse"><div class="accordion-body section-content-light">${currentLang==='ar'?'قد يسبب حساسية مؤقتة.':'May cause temporary sensitivity.'}</div></div>
                             </div>
                         </div>
                     </div>
@@ -2176,7 +2427,7 @@
             `;
         }
 
-        // تعديل دالة العقد حسب المتطلبات الجديدة
+        // دالة العقد المعدلة - إزالة زر حفظ الكل
         function loadContractTab() {
             const c = document.getElementById('tab-contract');
             const saved = patientsData[currentUser.id]?.contract || {};
@@ -2280,7 +2531,7 @@
 
             c.innerHTML = `
                 <div class="card">
-                    <div class="card-header"><i class="fas fa-file-contract"></i> ${translations[currentLang].contract}</div>
+                    <div class="card-header"><i class="fas fa-file-contract"></i> <span class="section-title-bold">${translations[currentLang].contract}</span></div>
                     <div class="card-body">
                         ${contractContent}
                     </div>
@@ -2345,21 +2596,36 @@
             loadContractTab();
         };
 
-        // دالة تحميل ملف المريض PDF
-        window.downloadPatientFilePDF = function() {
+        // دالة تحميل ملف المريض PDF (للطبيب فقط)
+        window.downloadPatientFilePDF = function(patientId) {
+            if (!patientId && currentUser.type === 'patient') {
+                patientId = currentUser.id;
+            }
+            if (!patientId) {
+                alert(currentLang==='ar'?'يرجى تحديد المريض':'Please select patient');
+                return;
+            }
+            
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
-            const patientId = currentUser.id;
-            const patient = currentUser;
+            const patient = users.find(u => u.id === patientId);
             const info = patientsData[patientId] || {};
+            const images = patientImages[patientId] || [];
             
             let y = 20;
             doc.setFontSize(18);
-            doc.text(translations[currentLang].myProfile, 105, y, { align: 'center' });
+            doc.text(translations[currentLang].patientFile, 105, y, { align: 'center' });
             y += 10;
             
             doc.setFontSize(12);
-            doc.text(`${translations[currentLang].patientName}: ${patient.name}`, 20, y);
+            doc.text(`${translations[currentLang].patientName}: ${patient?.name || ''}`, 20, y);
+            y += 7;
+            
+            // البيانات الشخصية
+            doc.setFontSize(14);
+            doc.setFont(undefined, 'bold');
+            doc.text(translations[currentLang].personalData, 20, y);
+            doc.setFont(undefined, 'normal');
             y += 7;
             if (info.personal) {
                 doc.text(`${translations[currentLang].age}: ${info.personal.age || ''}`, 20, y);
@@ -2372,9 +2638,12 @@
                 y += 7;
             }
             
+            // التاريخ الطبي
             y += 5;
             doc.setFontSize(14);
+            doc.setFont(undefined, 'bold');
             doc.text(translations[currentLang].medicalHistory, 20, y);
+            doc.setFont(undefined, 'normal');
             y += 7;
             doc.setFontSize(10);
             if (info.medical) {
@@ -2382,36 +2651,89 @@
                 if (info.medical.heart) medicalText += (currentLang==='ar'?'أمراض القلب, ':'Heart disease, ');
                 if (info.medical.pressure) medicalText += (currentLang==='ar'?'ضغط الدم, ':'High BP, ');
                 if (info.medical.diabetes) medicalText += (currentLang==='ar'?'السكري, ':'Diabetes, ');
+                if (info.medical.asthma) medicalText += (currentLang==='ar'?'الربو, ':'Asthma, ');
                 doc.text(medicalText, 20, y, { maxWidth: 170 });
                 y += 7;
             }
             
+            // التاريخ السني
             y += 5;
             doc.setFontSize(14);
+            doc.setFont(undefined, 'bold');
             doc.text(translations[currentLang].dentalHistory, 20, y);
+            doc.setFont(undefined, 'normal');
             y += 7;
             doc.setFontSize(10);
             if (info.dental) {
                 doc.text(`${translations[currentLang].lastVisit}: ${info.dental.lastVisit || ''}`, 20, y);
                 y += 7;
+                if (info.dental.symptomPain) {
+                    doc.text(`${currentLang==='ar'?'ألم في الأسنان':'Tooth pain'}`, 20, y);
+                    y += 7;
+                }
             }
             
+            // سبب الزيارة
             y += 5;
             doc.setFontSize(14);
+            doc.setFont(undefined, 'bold');
             doc.text(translations[currentLang].reasonForVisit, 20, y);
+            doc.setFont(undefined, 'normal');
             y += 7;
             doc.setFontSize(10);
             if (info.reason) {
                 doc.text(`${translations[currentLang].mainComplaint}: ${info.reason.mainComplaint || ''}`, 20, y, { maxWidth: 170 });
                 y += 7;
+                doc.text(`${currentLang==='ar'?'مدة الألم':'Pain duration'}: ${info.reason.painDuration || ''}`, 20, y);
+                y += 7;
+                doc.text(`${currentLang==='ar'?'شدة الألم':'Pain intensity'}: ${info.reason.painIntensity || ''}/10`, 20, y);
+                y += 7;
             }
             
+            // تشخيص الطبيب وخطة العلاج
             y += 5;
             doc.setFontSize(14);
-            doc.text(translations[currentLang].treatmentPlan, 20, y);
+            doc.setFont(undefined, 'bold');
+            doc.text(translations[currentLang].doctorDiagnosis, 20, y);
+            doc.setFont(undefined, 'normal');
             y += 7;
             doc.setFontSize(10);
-            doc.text(info.treatmentPlan || '', 20, y, { maxWidth: 170 });
+            doc.text(info.doctorDiagnosis || (currentLang==='ar'?'لا يوجد':'None'), 20, y, { maxWidth: 170 });
+            y += 10;
+            
+            doc.setFontSize(14);
+            doc.setFont(undefined, 'bold');
+            doc.text(translations[currentLang].treatmentPlan, 20, y);
+            doc.setFont(undefined, 'normal');
+            y += 7;
+            doc.setFontSize(10);
+            doc.text(info.treatmentPlan || (currentLang==='ar'?'لا يوجد':'None'), 20, y, { maxWidth: 170 });
+            y += 10;
+            
+            doc.setFontSize(14);
+            doc.setFont(undefined, 'bold');
+            doc.text(translations[currentLang].potentialRisks, 20, y);
+            doc.setFont(undefined, 'normal');
+            y += 7;
+            doc.setFontSize(10);
+            doc.text(info.risks || (currentLang==='ar'?'لا يوجد':'None'), 20, y, { maxWidth: 170 });
+            
+            // حالة العقد
+            y += 10;
+            doc.setFontSize(12);
+            doc.setFont(undefined, 'bold');
+            doc.text(`${translations[currentLang].contract}: `, 20, y);
+            doc.setFont(undefined, 'normal');
+            if (contracts[patientId]) {
+                const status = contracts[patientId].status === 'approved' ? 
+                    (currentLang==='ar'?'موافق عليه':'Approved') : 
+                    (contracts[patientId].status === 'rejected' ? (currentLang==='ar'?'مرفوض':'Rejected') : (currentLang==='ar'?'معلق':'Pending'));
+                doc.text(status, 60, y);
+                y += 7;
+                doc.text(`${translations[currentLang].dateLabel}: ${contracts[patientId].date || ''}`, 20, y);
+            } else {
+                doc.text(currentLang==='ar'?'غير متاح':'N/A', 60, y);
+            }
             
             doc.save('patient-file.pdf');
         };
@@ -2606,6 +2928,106 @@
                         </div>
                     </div>
                 </div>
+                <div class="tab-pane" id="aiAssistant">
+                    <h2 class="page-title">${translations[currentLang].aiAssistant} <i class="fas fa-robot"></i></h2>
+                    <p class="text-muted">${translations[currentLang].aiAssistantDesc}</p>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="ai-assistant-card">
+                                <h5 class="section-title-bold">${translations[currentLang].patientInfo}</h5>
+                                <div class="mb-3">
+                                    <label class="form-label section-content-light">${translations[currentLang].patient}</label>
+                                    <select class="form-select" id="aiPatientSelect" onchange="loadPatientDataForAI()">
+                                        <option value="">${translations[currentLang].selectPatientFirst}</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label section-content-light">${translations[currentLang].patientName}</label>
+                                    <input type="text" class="form-control" id="aiPatientName" readonly>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label section-content-light">${translations[currentLang].age}</label>
+                                        <input type="number" class="form-control" id="aiPatientAge">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label section-content-light">${translations[currentLang].gender}</label>
+                                        <select class="form-select" id="aiPatientGender">
+                                            <option value="male">${translations[currentLang].male}</option>
+                                            <option value="female">${translations[currentLang].female}</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label section-content-light">${translations[currentLang].chiefComplaint}</label>
+                                    <textarea class="form-control" id="aiChiefComplaint" rows="2"></textarea>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label section-content-light">${translations[currentLang].symptoms}</label>
+                                    <textarea class="form-control" id="aiSymptoms" rows="3" placeholder="${currentLang==='ar'?'مثال: تورم، حساسية للبارد':'Example: swelling, sensitivity to cold'}"></textarea>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label section-content-light">${translations[currentLang].diagnosis}</label>
+                                    <input type="text" class="form-control" id="aiDiagnosis" placeholder="${currentLang==='ar'?'مثال: تسوس، التهاب لثة':'Example: cavity, gingivitis'}">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label section-content-light">${translations[currentLang].xrayNotes}</label>
+                                    <textarea class="form-control" id="aiXrayNotes" rows="2"></textarea>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label section-content-light">${translations[currentLang].medicalHistory}</label>
+                                    <textarea class="form-control" id="aiMedicalHistory" rows="2" placeholder="${currentLang==='ar'?'مثال: سكري، ضغط':'Example: diabetes, hypertension'}"></textarea>
+                                </div>
+                                <button class="btn btn-accent w-100" onclick="generateAITreatmentPlan()" id="generateAIBtn">
+                                    <i class="fas fa-robot me-2"></i>${translations[currentLang].generatePlan}
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="ai-response-card" id="aiResponseContainer" style="display: none;">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h5 class="section-title-bold mb-0">${translations[currentLang].aiResponse}</h5>
+                                    <span class="ai-badge"><i class="fas fa-robot me-1"></i>AI</span>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <h6 class="text-primary">${translations[currentLang].diagnosisSummary}</h6>
+                                    <p id="aiDiagnosisSummary" class="section-content-light"></p>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <h6 class="text-primary">${translations[currentLang].suggestedTreatment}</h6>
+                                    <div id="aiTreatmentSteps" class="section-content-light"></div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <h6 class="text-primary">${translations[currentLang].medications}</h6>
+                                    <p id="aiMedications" class="section-content-light"></p>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <h6 class="text-primary">${translations[currentLang].followupAdvice}</h6>
+                                    <p id="aiFollowupAdvice" class="section-content-light"></p>
+                                </div>
+                                
+                                <div class="ai-disclaimer">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    ${translations[currentLang].disclaimer}
+                                </div>
+                                
+                                <div class="mt-3 d-flex gap-2">
+                                    <button class="copy-btn" onclick="copyAIPlan()">
+                                        <i class="fas fa-copy me-2"></i>${translations[currentLang].copyPlan}
+                                    </button>
+                                    <button class="btn btn-primary flex-grow-1" onclick="saveAIPlanToPatient()">
+                                        <i class="fas fa-save me-2"></i>${translations[currentLang].saveToPatient}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             `;
             loadDashboardData();
             loadPatientsList();
@@ -2614,12 +3036,228 @@
             loadReports();
             document.getElementById('patientSearch')?.addEventListener('input', searchPatient);
             populatePatientSelects();
+            populateAIPatientSelect();
             checkAppointments();
             renderDoctorDashboard();
             document.querySelectorAll('#v-pills-tab .nav-link').forEach(link => {
                 link.addEventListener('click', () => window.scrollTo(0, 0));
             });
         }
+
+        // دوال AI Assistant
+        function populateAIPatientSelect() {
+            let myRelations = relations.filter(r => r.doctorId === currentUser.id);
+            let patients = myRelations.map(r => users.find(u => u.id === r.patientId)).filter(p => p);
+            let options = '<option value="">' + (currentLang==='ar'?'اختر المريض':'Select patient') + '</option>';
+            patients.forEach(p => options += `<option value="${p.id}">${p.name}</option>`);
+            document.getElementById('aiPatientSelect').innerHTML = options;
+        }
+
+        window.loadPatientDataForAI = function() {
+            const patientId = document.getElementById('aiPatientSelect').value;
+            if (!patientId) return;
+            
+            const patient = users.find(u => u.id === patientId);
+            const info = patientsData[patientId] || {};
+            
+            document.getElementById('aiPatientName').value = patient?.name || '';
+            document.getElementById('aiPatientAge').value = info.personal?.age || '';
+            document.getElementById('aiPatientGender').value = info.personal?.gender === (currentLang==='ar'?'ذكر':'Male') ? 'male' : 'female';
+            document.getElementById('aiChiefComplaint').value = info.reason?.mainComplaint || '';
+            document.getElementById('aiSymptoms').value = '';
+            
+            // تجميع الأعراض من التاريخ السني
+            let symptoms = [];
+            if (info.dental) {
+                if (info.dental.symptomPain) symptoms.push(currentLang==='ar'?'ألم في الأسنان':'Tooth pain');
+                if (info.dental.symptomBleeding) symptoms.push(currentLang==='ar'?'نزيف اللثة':'Bleeding gums');
+                if (info.dental.symptomSensitivity) symptoms.push(currentLang==='ar'?'حساسية':'Sensitivity');
+                if (info.dental.symptomJaw) symptoms.push(currentLang==='ar'?'ألم في الفك':'Jaw pain');
+            }
+            document.getElementById('aiSymptoms').value = symptoms.join(', ');
+            
+            document.getElementById('aiDiagnosis').value = info.doctorDiagnosis || '';
+            
+            // تجميع التاريخ الطبي
+            let medicalHistory = [];
+            if (info.medical) {
+                if (info.medical.diabetes) medicalHistory.push(currentLang==='ar'?'سكري':'Diabetes');
+                if (info.medical.pressure) medicalHistory.push(currentLang==='ar'?'ضغط':'Hypertension');
+                if (info.medical.heart) medicalHistory.push(currentLang==='ar'?'قلب':'Heart disease');
+                if (info.medical.asthma) medicalHistory.push(currentLang==='ar'?'ربو':'Asthma');
+            }
+            document.getElementById('aiMedicalHistory').value = medicalHistory.join(', ');
+        };
+
+        window.generateAITreatmentPlan = function() {
+            const patientId = document.getElementById('aiPatientSelect').value;
+            const patientName = document.getElementById('aiPatientName').value;
+            const age = document.getElementById('aiPatientAge').value;
+            const gender = document.getElementById('aiPatientGender').value;
+            const chiefComplaint = document.getElementById('aiChiefComplaint').value;
+            const symptoms = document.getElementById('aiSymptoms').value;
+            const diagnosis = document.getElementById('aiDiagnosis').value;
+            const xrayNotes = document.getElementById('aiXrayNotes').value;
+            const medicalHistory = document.getElementById('aiMedicalHistory').value;
+
+            if (!patientId || !patientName || !age || !chiefComplaint) {
+                alert(translations[currentLang].fillRequiredFields);
+                return;
+            }
+
+            showLoading();
+            document.getElementById('generateAIBtn').disabled = true;
+            document.getElementById('generateAIBtn').innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>' + translations[currentLang].generating;
+
+            // محاكاة استجابة الذكاء الاصطناعي
+            setTimeout(() => {
+                const aiResponse = generateMockAIResponse(diagnosis, symptoms, medicalHistory);
+                
+                document.getElementById('aiDiagnosisSummary').innerHTML = aiResponse.diagnosisSummary;
+                
+                let treatmentHtml = '<ol class="mb-0">';
+                aiResponse.treatmentSteps.forEach(step => {
+                    treatmentHtml += `<li>${step}</li>`;
+                });
+                treatmentHtml += '</ol>';
+                document.getElementById('aiTreatmentSteps').innerHTML = treatmentHtml;
+                
+                document.getElementById('aiMedications').innerHTML = aiResponse.medications;
+                document.getElementById('aiFollowupAdvice').innerHTML = aiResponse.followup;
+                
+                document.getElementById('aiResponseContainer').style.display = 'block';
+                
+                hideLoading();
+                document.getElementById('generateAIBtn').disabled = false;
+                document.getElementById('generateAIBtn').innerHTML = '<i class="fas fa-robot me-2"></i>' + translations[currentLang].generatePlan;
+            }, 2000);
+        };
+
+        function generateMockAIResponse(diagnosis, symptoms, medicalHistory) {
+            // دالة لتوليد رد وهمي للذكاء الاصطناعي - في التطبيق الفعلي سيتم استدعاء API حقيقي
+            const isArabic = currentLang === 'ar';
+            
+            let response = {
+                diagnosisSummary: '',
+                treatmentSteps: [],
+                medications: '',
+                followup: ''
+            };
+            
+            if (diagnosis.toLowerCase().includes('تسوس') || diagnosis.toLowerCase().includes('cavity')) {
+                response.diagnosisSummary = isArabic ? 'تسوس الأسنان: تجويف في طبقة المينا' : 'Dental Caries: Cavity in enamel layer';
+                response.treatmentSteps = isArabic ? [
+                    'فحص سريري للأسنان المصابة',
+                    'تصوير شعاعي لتحديد عمق التسوس',
+                    'إزالة التسوس باستخدام الحفر',
+                    'حشو تجميلي بلون السن',
+                    'تلميع الحشوة'
+                ] : [
+                    'Clinical examination of affected teeth',
+                    'X-ray to determine cavity depth',
+                    'Caries removal using drilling',
+                    'Tooth-colored composite filling',
+                    'Polishing the filling'
+                ];
+                response.medications = isArabic ? 'مسكن ألم عند الحاجة (إيبوبروفين)' : 'Pain reliever if needed (Ibuprofen)';
+                response.followup = isArabic ? 'مراجعة بعد أسبوعين للتأكد من عدم وجود حساسية' : 'Review after 2 weeks to check for sensitivity';
+            } 
+            else if (diagnosis.toLowerCase().includes('التهاب') || diagnosis.toLowerCase().includes('gingivitis')) {
+                response.diagnosisSummary = isArabic ? 'التهاب اللثة: التهاب في أنسجة اللثة' : 'Gingivitis: Inflammation of gum tissue';
+                response.treatmentSteps = isArabic ? [
+                    'تنظيف الأسنان بإزالة الترسبات الجيرية',
+                    'تلميع الأسنان',
+                    'تعليم تقنيات التنظيف الصحيحة',
+                    'غسول فم مطهر'
+                ] : [
+                    'Scaling and root planing',
+                    'Teeth polishing',
+                    'Oral hygiene instructions',
+                    'Antiseptic mouthwash'
+                ];
+                response.medications = isArabic ? 'غسول فم مطهر بالكلورهيكسيدين' : 'Chlorhexidine mouthwash';
+                response.followup = isArabic ? 'مراجعة بعد 3 أشهر لتقييم تحسن اللثة' : 'Review after 3 months to assess gum improvement';
+            }
+            else if (diagnosis.toLowerCase().includes('خراج') || diagnosis.toLowerCase().includes('abscess')) {
+                response.diagnosisSummary = isArabic ? 'خراج سني: تجمع صديدي بسبب التهاب الجذور' : 'Dental abscess: Pus collection due to root infection';
+                response.treatmentSteps = isArabic ? [
+                    'تصوير شعاعي لتحديد مصدر العدوى',
+                    'فتح الخراج لتصريف الصديد',
+                    'علاج قناة الجذر',
+                    'مضاد حيوي'
+                ] : [
+                    'X-ray to identify infection source',
+                    'Incision and drainage of abscess',
+                    'Root canal treatment',
+                    'Antibiotics'
+                ];
+                response.medications = isArabic ? 'مضاد حيوي (أموكسيسيلين) ومسكن ألم' : 'Antibiotics (Amoxicillin) and pain reliever';
+                response.followup = isArabic ? 'مراجعة بعد أسبوع للتأكد من زوال العدوى' : 'Review after 1 week to ensure infection resolved';
+            }
+            else {
+                response.diagnosisSummary = isArabic ? 'تشخيص غير محدد: يحتاج إلى فحص إضافي' : 'Undetermined diagnosis: Needs further examination';
+                response.treatmentSteps = isArabic ? [
+                    'فحص سريري كامل',
+                    'تصوير شعاعي بانورامي',
+                    'استشارة أخصائي عند الحاجة'
+                ] : [
+                    'Complete clinical examination',
+                    'Panoramic X-ray',
+                    'Specialist consultation if needed'
+                ];
+                response.medications = isArabic ? 'مسكن ألم مؤقت (باراسيتامول)' : 'Temporary pain reliever (Paracetamol)';
+                response.followup = isArabic ? 'مراجعة خلال أسبوع لوضع خطة علاج مناسبة' : 'Review within 1 week for appropriate treatment plan';
+            }
+            
+            return response;
+        }
+
+        window.copyAIPlan = function() {
+            const diagnosisSummary = document.getElementById('aiDiagnosisSummary').innerText;
+            const treatmentSteps = document.getElementById('aiTreatmentSteps').innerText;
+            const medications = document.getElementById('aiMedications').innerText;
+            const followup = document.getElementById('aiFollowupAdvice').innerText;
+            
+            const planText = `Diagnosis Summary: ${diagnosisSummary}\n\nTreatment Plan:\n${treatmentSteps}\n\nMedications:\n${medications}\n\nFollow-up:\n${followup}`;
+            
+            navigator.clipboard.writeText(planText).then(() => {
+                showToast(translations[currentLang].planCopied);
+            });
+        };
+
+        window.saveAIPlanToPatient = function() {
+            const patientId = document.getElementById('aiPatientSelect').value;
+            if (!patientId) {
+                alert(translations[currentLang].selectPatientFirst);
+                return;
+            }
+            
+            const diagnosisSummary = document.getElementById('aiDiagnosisSummary').innerText;
+            const treatmentSteps = document.getElementById('aiTreatmentSteps').innerText;
+            const medications = document.getElementById('aiMedications').innerText;
+            const followup = document.getElementById('aiFollowupAdvice').innerText;
+            
+            const aiPlan = {
+                diagnosisSummary,
+                treatmentSteps,
+                medications,
+                followup,
+                date: new Date().toISOString(),
+                doctorId: currentUser.id
+            };
+            
+            if (!aiTreatmentPlans[patientId]) aiTreatmentPlans[patientId] = [];
+            aiTreatmentPlans[patientId].push(aiPlan);
+            
+            // تحديث خطة العلاج في بيانات المريض
+            if (!patientsData[patientId]) patientsData[patientId] = {};
+            patientsData[patientId].aiTreatmentPlan = treatmentSteps;
+            
+            saveAITreatmentPlans();
+            savePatientsData();
+            
+            showToast(translations[currentLang].planSaved);
+        };
 
         window.switchToTab = function(tabId) {
             document.querySelector(`[data-bs-target="#${tabId}"]`).click();
@@ -2699,6 +3337,7 @@
                     <button class="btn btn-sm btn-info" onclick="showPatientDetails('${p.id}')">${translations[currentLang].viewFile}</button>
                     <button class="btn btn-sm btn-warning" onclick="viewContract('${p.id}')">${translations[currentLang].contract}</button>
                     <button class="btn btn-sm btn-secondary" onclick="viewCaseImages('${p.id}')">${translations[currentLang].caseImages}</button>
+                    <button class="btn btn-sm btn-success" onclick="downloadPatientFilePDF('${p.id}')">${translations[currentLang].downloadPatientFilePDF}</button>
                 </td></tr>`;
             });
             document.getElementById('patientsTable').innerHTML = html;
@@ -2821,7 +3460,6 @@
             showToast(currentLang==='ar'?'تم إضافة الموعد':'Appointment added');
         }
 
-        // تعديل دالة تعديل الموعد
         window.editAppointment = function(appointmentId) {
             const app = appointments.find(a => a.id == appointmentId);
             if (!app) return;
@@ -2958,7 +3596,9 @@
                 patientImages,
                 patientComments,
                 contracts,
-                contractModifyRequests
+                contractModifyRequests,
+                clinicData,
+                aiTreatmentPlans
             };
             let blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
             let a = document.createElement('a');
@@ -3109,38 +3749,38 @@
                                 <div class="text-center mb-3">
                                     <img src="${patientPic}" class="rounded-circle" style="width:100px;height:100px;object-fit:cover;border:3px solid #00cec9;">
                                 </div>
-                                <h6 class="text-primary">${currentLang==='ar'?'التشخيص':'Diagnosis'}</h6>
+                                <h6 class="text-primary section-title-bold">${currentLang==='ar'?'التشخيص':'Diagnosis'}</h6>
                                 <textarea class="form-control" id="doctorDiagnosis" rows="2" ${contracts[patientId]?.status === 'approved' ? 'readonly' : ''}>${info.doctorDiagnosis || ''}</textarea>
-                                <h6 class="mt-3 text-primary">${currentLang==='ar'?'خطة العلاج':'Treatment plan'}</h6>
+                                <h6 class="mt-3 text-primary section-title-bold">${currentLang==='ar'?'خطة العلاج':'Treatment plan'}</h6>
                                 <textarea class="form-control" id="treatmentPlan" rows="3" ${contracts[patientId]?.status === 'approved' ? 'readonly' : ''}>${info.treatmentPlan || ''}</textarea>
-                                <h6 class="mt-3 text-primary">${currentLang==='ar'?'المخاطر المحتملة':'Potential risks'}</h6>
+                                <h6 class="mt-3 text-primary section-title-bold">${currentLang==='ar'?'المخاطر المحتملة':'Potential risks'}</h6>
                                 <textarea class="form-control" id="risks" rows="2" ${contracts[patientId]?.status === 'approved' ? 'readonly' : ''}>${info.risks || ''}</textarea>
                                 ${contracts[patientId]?.status === 'approved' ? 
                                     `<div class="alert alert-info mt-2">${currentLang==='ar'?'العقد موافق عليه، لا يمكن التعديل.':'Contract approved, cannot modify.'}</div>
                                      <button class="btn btn-warning" onclick="requestContractModify('${patientId}')">${currentLang==='ar'?'طلب تعديل العقد':'Request modify contract'}</button>` : ''}
                                 <hr>
-                                <h6 class="text-primary">${currentLang==='ar'?'البيانات الشخصية':'Personal data'}</h6>
-                                <div class="row">
+                                <h6 class="text-primary section-title-bold">${currentLang==='ar'?'البيانات الشخصية':'Personal data'}</h6>
+                                <div class="row section-content-light">
                                     <div class="col-md-6"><strong>${currentLang==='ar'?'العمر':'Age'}:</strong> ${info.personal?.age || (currentLang==='ar'?'غير محدد':'N/A')}</div>
                                     <div class="col-md-6"><strong>${currentLang==='ar'?'النوع':'Gender'}:</strong> ${info.personal?.gender || (currentLang==='ar'?'غير محدد':'N/A')}</div>
                                     <div class="col-md-6"><strong>${currentLang==='ar'?'المهنة':'Occupation'}:</strong> ${info.personal?.job || (currentLang==='ar'?'غير محدد':'N/A')}</div>
                                     <div class="col-md-6"><strong>${currentLang==='ar'?'العنوان':'Address'}:</strong> ${info.personal?.address || (currentLang==='ar'?'غير محدد':'N/A')}</div>
                                     <div class="col-md-6"><strong>${currentLang==='ar'?'الهاتف':'Phone'}:</strong> ${info.personal?.phone || (currentLang==='ar'?'غير محدد':'N/A')}</div>
                                 </div>
-                                <h6 class="mt-3 text-primary">${currentLang==='ar'?'التاريخ الطبي':'Medical history'}</h6>
-                                <div class="row">
+                                <h6 class="mt-3 text-primary section-title-bold">${currentLang==='ar'?'التاريخ الطبي':'Medical history'}</h6>
+                                <div class="row section-content-light">
                                     <div class="col-md-6"><strong>${currentLang==='ar'?'أمراض القلب':'Heart disease'}:</strong> ${info.medical?.heart ? (currentLang==='ar'?'نعم':'Yes') : (currentLang==='ar'?'لا':'No')}</div>
                                     <div class="col-md-6"><strong>${currentLang==='ar'?'ضغط الدم':'High BP'}:</strong> ${info.medical?.pressure ? (currentLang==='ar'?'نعم':'Yes') : (currentLang==='ar'?'لا':'No')}</div>
                                     <div class="col-md-6"><strong>${currentLang==='ar'?'السكري':'Diabetes'}:</strong> ${info.medical?.diabetes ? (currentLang==='ar'?'نعم':'Yes') : (currentLang==='ar'?'لا':'No')}</div>
                                     <div class="col-md-6"><strong>${currentLang==='ar'?'الربو':'Asthma'}:</strong> ${info.medical?.asthma ? (currentLang==='ar'?'نعم':'Yes') : (currentLang==='ar'?'لا':'No')}</div>
                                 </div>
-                                <h6 class="mt-3 text-primary">${currentLang==='ar'?'التاريخ السني':'Dental history'}</h6>
-                                <div class="row">
+                                <h6 class="mt-3 text-primary section-title-bold">${currentLang==='ar'?'التاريخ السني':'Dental history'}</h6>
+                                <div class="row section-content-light">
                                     <div class="col-md-6"><strong>${currentLang==='ar'?'آخر زيارة':'Last visit'}:</strong> ${info.dental?.lastVisit || (currentLang==='ar'?'غير محدد':'N/A')}</div>
                                     <div class="col-md-6"><strong>${currentLang==='ar'?'ألم في الأسنان':'Tooth pain'}:</strong> ${info.dental?.symptomPain ? (currentLang==='ar'?'نعم':'Yes') : (currentLang==='ar'?'لا':'No')}</div>
                                 </div>
-                                <h6 class="mt-3 text-primary">${currentLang==='ar'?'سبب الزيارة':'Reason for visit'}</h6>
-                                <div class="row">
+                                <h6 class="mt-3 text-primary section-title-bold">${currentLang==='ar'?'سبب الزيارة':'Reason for visit'}</h6>
+                                <div class="row section-content-light">
                                     <div class="col-md-12"><strong>${translations[currentLang].mainComplaint}:</strong> ${info.reason?.mainComplaint || (currentLang==='ar'?'غير محدد':'N/A')}</div>
                                     <div class="col-md-6"><strong>${currentLang==='ar'?'مدة الألم':'Pain duration'}:</strong> ${info.reason?.painDuration || (currentLang==='ar'?'غير محدد':'N/A')}</div>
                                     <div class="col-md-6"><strong>${currentLang==='ar'?'نوع الألم':'Pain type'}:</strong> ${info.reason?.painType || (currentLang==='ar'?'غير محدد':'N/A')}</div>
@@ -3148,9 +3788,9 @@
                                     <div class="col-md-6"><strong>${currentLang==='ar'?'المحفز':'Trigger'}:</strong> ${info.reason?.painTrigger || (currentLang==='ar'?'غير محدد':'N/A')}</div>
                                     <div class="col-md-6"><strong>${translations[currentLang].painDurationAfterTrigger}:</strong> ${info.reason?.painDurationAfterTrigger ? translations[currentLang][info.reason.painDurationAfterTrigger] || info.reason.painDurationAfterTrigger : (currentLang==='ar'?'غير محدد':'N/A')}</div>
                                 </div>
-                                ${info.xray ? `<h6 class="mt-3 text-primary">${currentLang==='ar'?'صورة الأشعة':'X-ray'}</h6><img src="${info.xray}" class="xray-preview">` : ''}
+                                ${info.xray ? `<h6 class="mt-3 text-primary section-title-bold">${currentLang==='ar'?'صورة الأشعة':'X-ray'}</h6><img src="${info.xray}" class="xray-preview">` : ''}
                                 <hr>
-                                <h6 class="text-primary">${currentLang==='ar'?'صور إضافية للحالة':'Additional case images'}</h6>
+                                <h6 class="text-primary section-title-bold">${currentLang==='ar'?'صور إضافية للحالة':'Additional case images'}</h6>
                                 <ul class="nav nav-tabs" id="imageTabs">
                                     <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#before">${translations[currentLang].before}</a></li>
                                     <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#after">${translations[currentLang].after}</a></li>
@@ -3161,7 +3801,7 @@
                                     <div class="tab-pane" id="after">${renderImages(afterImages)}</div>
                                     <div class="tab-pane" id="general">${renderImages(generalImages)}</div>
                                 </div>
-                                <h6 class="mt-3">${currentLang==='ar'?'إضافة صور جديدة':'Add new images'}</h6>
+                                <h6 class="mt-3 section-title-bold">${currentLang==='ar'?'إضافة صور جديدة':'Add new images'}</h6>
                                 <select class="form-select mb-2" id="imageCategory">
                                     <option value="before">${translations[currentLang].before}</option>
                                     <option value="after">${translations[currentLang].after}</option>
@@ -3169,7 +3809,7 @@
                                 </select>
                                 <input type="file" id="additionalImages" accept="image/*" multiple class="form-control mb-2">
                                 <div id="additionalImagesPreview"></div>
-                                <h6 class="mt-3 text-primary">${currentLang==='ar'?'تعليق الطبيب':'Doctor\'s comment'}</h6>
+                                <h6 class="mt-3 text-primary section-title-bold">${currentLang==='ar'?'تعليق الطبيب':'Doctor\'s comment'}</h6>
                                 <textarea class="form-control" id="doctorComment" rows="3">${comments}</textarea>
                             </div>
                             <div class="modal-footer">
@@ -3275,4 +3915,4 @@
         })();
     </script>
 </body>
-</html>
+                    </html>
