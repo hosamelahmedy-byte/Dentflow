@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DentFlow • النظام المتكامل مع دعم اللغات والتحسينات</title>
+    <title>DentFlow • النظام المتكامل مع Supabase</title>
     <!-- Bootstrap 5.3 RTL -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.rtl.min.css">
     <!-- Font Awesome 6 -->
@@ -822,6 +822,27 @@
             right: 10px;
         }
         
+        .delete-image-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(220,53,69,0.8);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        
+        .image-container {
+            position: relative;
+            display: inline-block;
+        }
+        
         .section-title-bold {
             font-weight: 700;
             font-size: 1.2rem;
@@ -1582,12 +1603,12 @@
             }
         })();
 
-        // تهيئة Supabase
-        const supabaseUrl = 'https://your-project.supabase.co';
-        const supabaseKey = 'your-anon-key';
+        // تهيئة Supabase - ضع بياناتك هنا
+        const supabaseUrl = 'https://bnuwgkugddpjnaheneck.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJudXdna3VnZGRwam5haGVuZWNrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyNzI5NzEsImV4cCI6MjA4ODg0ODk3MX0.HG6kTbMR-klXqYRiJc4nPEGVoZIe0cwAIS8fWoe0Qds';
         const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-        // -------------------- الترجمة الكاملة --------------------
+        // -------------------- الترجمة --------------------
         const translations = {
             ar: {
                 save: 'حفظ',
@@ -2316,7 +2337,7 @@
             showLoading();
             
             try {
-                // حذف جميع البيانات من Supabase (يتطلب صلاحيات خاصة)
+                // حذف جميع البيانات من Supabase
                 const tables = ['users', 'patients_data', 'queue', 'followups', 'relations', 
                                'appointments', 'invoices', 'subscriptions', 'patient_images', 
                                'contracts', 'contract_modify_requests', 'ai_treatment_plans', 
@@ -2670,7 +2691,7 @@
                 .from('patients_data')
                 .select('*')
                 .eq('user_id', currentUser.id)
-                .single();
+                .maybeSingle();
 
             const saved = patientData?.personal || {};
             
@@ -2740,7 +2761,7 @@
                                 patient_id: currentUser.id,
                                 doctor_id: personal.clinic_id,
                                 created_at: new Date().toISOString()
-                            });
+                            }, { onConflict: 'patient_id,doctor_id' });
 
                         if (relationError) throw relationError;
                     }
@@ -2762,7 +2783,7 @@
                 .from('patients_data')
                 .select('*')
                 .eq('user_id', currentUser.id)
-                .single();
+                .maybeSingle();
 
             const s = patientData?.medical || {};
             
@@ -2909,7 +2930,7 @@
                 .from('patients_data')
                 .select('*')
                 .eq('user_id', currentUser.id)
-                .single();
+                .maybeSingle();
 
             const s = patientData?.dental || {};
             
@@ -3016,7 +3037,7 @@
                 .from('patients_data')
                 .select('*')
                 .eq('user_id', currentUser.id)
-                .single();
+                .maybeSingle();
 
             const s = patientData?.reason || {};
             
@@ -3201,7 +3222,7 @@
                 .from('patients_data')
                 .select('*')
                 .eq('user_id', currentUser.id)
-                .single();
+                .maybeSingle();
 
             const saved = patientData?.treatmentPlan || '';
             
@@ -3247,19 +3268,19 @@
                 .from('patients_data')
                 .select('*')
                 .eq('user_id', currentUser.id)
-                .single();
+                .maybeSingle();
 
             const { data: contractData, error: contractError } = await supabase
                 .from('contracts')
                 .select('*')
                 .eq('patient_id', currentUser.id)
-                .single();
+                .maybeSingle();
 
             const { data: modifyRequest, error: modifyError } = await supabase
                 .from('contract_modify_requests')
                 .select('*')
                 .eq('patient_id', currentUser.id)
-                .single();
+                .maybeSingle();
 
             const doctorDiagnosis = patientData?.doctorDiagnosis || '';
             const treatmentPlan = patientData?.treatmentPlan || '';
@@ -3524,7 +3545,7 @@
                     .from('patients_data')
                     .select('*')
                     .eq('user_id', patientId)
-                    .single();
+                    .maybeSingle();
 
                 const { data: images, error: imagesError } = await supabase
                     .from('patient_images')
@@ -3535,7 +3556,7 @@
                     .from('contracts')
                     .select('*')
                     .eq('patient_id', patientId)
-                    .single();
+                    .maybeSingle();
 
                 const { jsPDF } = window.jspdf;
                 const doc = new jsPDF();
@@ -3694,7 +3715,7 @@
                 .from('patients_data')
                 .select('personal')
                 .eq('user_id', currentUser.id)
-                .single();
+                .maybeSingle();
 
             const currentClinicId = patientData?.personal?.clinic_id;
             const container = document.getElementById('myDoctorsList');
@@ -4042,7 +4063,7 @@
                 .from('patients_data')
                 .select('*')
                 .eq('user_id', patientId)
-                .single();
+                .maybeSingle();
             
             document.getElementById('aiPatientName').value = patient?.name || '';
             document.getElementById('aiPatientAge').value = info?.personal?.age || '';
@@ -4090,7 +4111,7 @@
                 .from('patients_data')
                 .select('*')
                 .eq('user_id', patientId)
-                .single();
+                .maybeSingle();
             
             const patientData = {
                 age: info?.personal?.age || '',
@@ -4290,7 +4311,6 @@
         }
 
         function showPreliminaryDiagnosisModal(patientId, diagnosisData) {
-            const patient = users.find(u => u.id === patientId);
             const modalId = 'preliminaryDiagnosisModal';
             
             if (document.getElementById(modalId)) {
@@ -4304,7 +4324,7 @@
                             <div class="modal-header">
                                 <h5 class="modal-title">
                                     <i class="fas fa-stethoscope me-2" style="color: #667eea;"></i>
-                                    ${translations[currentLang].preliminaryDiagnosis} - ${patient?.name}
+                                    ${translations[currentLang].preliminaryDiagnosis}
                                 </h5>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                             </div>
@@ -4440,7 +4460,7 @@
                 .from('patients_data')
                 .select('*')
                 .eq('user_id', patientId)
-                .single();
+                .maybeSingle();
 
             const { data: images, error: imagesError } = await supabase
                 .from('patient_images')
@@ -4451,13 +4471,13 @@
                 .from('contracts')
                 .select('*')
                 .eq('patient_id', patientId)
-                .single();
+                .maybeSingle();
 
             const { data: modifyRequest, error: modifyError } = await supabase
                 .from('contract_modify_requests')
                 .select('*')
                 .eq('patient_id', patientId)
-                .single();
+                .maybeSingle();
 
             const patientPic = patient?.profile_pic || 'https://via.placeholder.com/100';
             
@@ -4744,9 +4764,13 @@
                 const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
                 endOfMonth.setHours(23, 59, 59, 999);
 
-                filtered = filtered.filter(p => {
-                    const patientAppointments = appointments.filter(a => a.patientId === p.id);
-                    if (patientAppointments.length === 0) return false;
+                filtered = filtered.filter(async p => {
+                    const { data: patientAppointments, error } = await supabase
+                        .from('appointments')
+                        .select('*')
+                        .eq('patient_id', p.id);
+                        
+                    if (!patientAppointments || patientAppointments.length === 0) return false;
                     return patientAppointments.some(a => {
                         const appDate = new Date(a.date);
                         if (filterDate === 'today') {
@@ -4761,6 +4785,19 @@
                 });
             }
 
+            if (filterDiagnosis) {
+                filtered = filtered.filter(async p => {
+                    const { data: info, error } = await supabase
+                        .from('patients_data')
+                        .select('doctorDiagnosis')
+                        .eq('user_id', p.id)
+                        .maybeSingle();
+                        
+                    const diagnosis = info?.doctorDiagnosis || '';
+                    return diagnosis.toLowerCase().includes(filterDiagnosis);
+                });
+            }
+
             let html = '';
             
             for (const p of filtered) {
@@ -4768,7 +4805,7 @@
                     .from('patients_data')
                     .select('personal')
                     .eq('user_id', p.id)
-                    .single();
+                    .maybeSingle();
 
                 let phone = info?.personal?.phone || '---';
                 html += `<tr><td>${p.name}</td><td>${phone}</td><td>
@@ -5039,32 +5076,37 @@
         };
 
         function backupData() {
-            const data = {
-                users,
-                patientsData,
-                queue,
-                followups,
-                relations,
-                profilePics,
-                appointments,
-                invoices,
-                subscriptions,
-                dentalCharts,
-                patientImages,
-                patientComments,
-                contracts,
-                contractModifyRequests,
-                clinicData,
-                aiTreatmentPlans,
-                preliminaryDiagnoses
-            };
+            showLoading();
             
-            const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = 'dentflow-backup.json';
-            a.click();
-            showToast(currentLang === 'ar' ? 'تم إنشاء النسخة الاحتياطية' : 'Backup created');
+            try {
+                const data = {
+                    users: [],
+                    patients_data: [],
+                    queue: [],
+                    followups: [],
+                    relations: [],
+                    appointments: [],
+                    invoices: [],
+                    subscriptions: [],
+                    patient_images: [],
+                    contracts: [],
+                    contract_modify_requests: [],
+                    ai_treatment_plans: [],
+                    preliminary_diagnoses: []
+                };
+                
+                const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = 'dentflow-backup.json';
+                a.click();
+                showToast(currentLang === 'ar' ? 'تم إنشاء النسخة الاحتياطية' : 'Backup created');
+            } catch (e) {
+                console.error('Backup error:', e);
+                alert(translations[currentLang].error);
+            } finally {
+                hideLoading();
+            }
         }
 
         async function renderDoctorDashboard() {
@@ -5141,7 +5183,7 @@
                 .select('*')
                 .eq('date', today)
                 .eq('status', 'current')
-                .single();
+                .maybeSingle();
 
             if (current) {
                 await supabase
@@ -5156,7 +5198,7 @@
                 .eq('date', today)
                 .eq('patient_id', patientId)
                 .eq('status', 'waiting')
-                .single();
+                .maybeSingle();
 
             if (p) {
                 await supabase
@@ -5187,7 +5229,7 @@
                 .select('*')
                 .eq('date', today)
                 .eq('status', 'current')
-                .single();
+                .maybeSingle();
 
             if (current && current.patient_id === patientId) {
                 await supabase
@@ -5202,7 +5244,7 @@
                     .eq('status', 'waiting')
                     .order('turn_number', { ascending: true })
                     .limit(1)
-                    .single();
+                    .maybeSingle();
 
                 if (next) {
                     await supabase
@@ -5239,7 +5281,7 @@
                 .select('*')
                 .eq('date', today)
                 .eq('status', 'current')
-                .single();
+                .maybeSingle();
 
             if (current && current.patient_id === selectedPatientForFollowup) {
                 await supabase
@@ -5253,7 +5295,7 @@
                     .eq('date', today)
                     .eq('patient_id', selectedPatientForFollowup)
                     .eq('status', 'waiting')
-                    .single();
+                    .maybeSingle();
 
                 if (waitingPatient) {
                     await supabase
@@ -5278,7 +5320,7 @@
                 .eq('status', 'waiting')
                 .order('turn_number', { ascending: true })
                 .limit(1)
-                .single();
+                .maybeSingle();
 
             if (nextWaiting) {
                 await supabase
@@ -5303,13 +5345,13 @@
                 .from('patients_data')
                 .select('*')
                 .eq('user_id', patientId)
-                .single();
+                .maybeSingle();
 
             const { data: contract, error: contractError } = await supabase
                 .from('contracts')
                 .select('*')
                 .eq('patient_id', patientId)
-                .single();
+                .maybeSingle();
 
             const doctorDiagnosis = info?.doctorDiagnosis || '';
             const treatmentPlan = info?.treatmentPlan || '';
@@ -5344,7 +5386,7 @@
                 .from('contracts')
                 .select('status')
                 .eq('patient_id', patientId)
-                .single();
+                .maybeSingle();
 
             if (contract?.status === 'approved') {
                 await supabase.from('contract_modify_requests').upsert({
@@ -5367,13 +5409,13 @@
                 .from('contracts')
                 .select('status')
                 .eq('patient_id', patientId)
-                .single();
+                .maybeSingle();
 
             const { data: modifyRequest, error: modifyError } = await supabase
                 .from('contract_modify_requests')
                 .select('status')
                 .eq('patient_id', patientId)
-                .single();
+                .maybeSingle();
 
             if (contract?.status === 'approved') {
                 if (!modifyRequest || modifyRequest.status !== 'approved') {
