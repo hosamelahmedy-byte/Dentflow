@@ -4420,9 +4420,8 @@
                 }
             };
 
-                        // بدء التشغيل
+                     // بدء التشغيل
             const saved = localStorage.getItem('dentflow_currentUser');
-            
             if (saved) {
                 currentUser = JSON.parse(saved);
             }
@@ -4435,11 +4434,16 @@
             
             updateUILanguage();
             
-            // تأكد من تحميل الصفحة ثم بدء التطبيق
-            window.addEventListener('load', async function() {
-                await startApp();
+            // تشغيل التطبيق بعد تحميل الصفحة
+            window.addEventListener('load', function() {
+                // نتأكد من وجود startApp
+                if (typeof startApp === 'function') {
+                    startApp();
+                } else {
+                    console.error('startApp غير موجودة');
+                }
             });
-        // هذا يغلق الدالة الرئيسية
+        })(); // إغلاق الدالة الرئيسية
     </script>
 </body>
 </html>
