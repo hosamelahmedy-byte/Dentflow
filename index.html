@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DentFlow • النظام المتكامل مع Supabase</title>
+    <title>DentFlow • النظام المتكامل مع supabaseClient</title>
     <!-- Bootstrap 5.3 RTL -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.rtl.min.css">
     <!-- Font Awesome 6 -->
@@ -27,8 +27,8 @@
     <!-- jsPDF و html2canvas -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <!-- Supabase SDK -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- supabaseClient SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabaseClient/supabaseClient-js@2"></script>
     <style>
         * {
             margin: 0;
@@ -1607,20 +1607,31 @@
 // تهيئة Supabase - تعريف واحد فقط
 // ------------------------------------------------------------
 const supabaseUrl = 'https://bnuwgkugddpjnaheneck.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJudXdna3VnZGRwam5haGVuZWNrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyNzI5NzEsImV4cCI6MjA4ODg0ODk3MX0.HG6kTbMR-klXqYRiJc4nPEGVoZIe0cwAIS8fWoe0Qds';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...';
 
-// نتأكد أن المكتبة حملت
-if (typeof supabase === 'undefined' || !supabase.createClient) {
-    console.error('❌ مكتبة Supabase لم يتم تحميلها!');
-} else {
-    console.log('✅ تم تحميل مكتبة Supabase');
-    const { createClient } = supabase;
-    window.supabaseClient = createClient(supabaseUrl, supabaseKey);
-    console.log('✅ تم تهيئة Supabase Client');
+let supabaseClient = null; // نعرفه كمتغير عام لكن فاضي
+
+function initSupabase() {
+    if (typeof supabase !== 'undefined' && supabase.createClient) {
+        console.log('✅ تم تحميل مكتبة Supabase');
+        const { createClient } = supabase;
+        supabaseClient = createClient(supabaseUrl, supabaseKey);
+        console.log('✅ تم تهيئة Supabase Client');
+        
+        // بعد ما يتهيأ، نقدر نستخدمه
+        return true;
+    } else {
+        console.log('⏳ في انتظار تحميل مكتبة Supabase...');
+        return false;
+    }
 }
 
-// الآن نستخدم window.supabaseClient في كل مكان
-const supabase = window.supabaseClient; // هذا سطر واحد فقط
+// نحاول التهيئة كل 100 مللي ثانية لحد ما تنجح
+(function waitForSupabase() {
+    if (!initSupabase()) {
+        setTimeout(waitForSupabase, 100);
+    }
+})();
         // -------------------- الترجمة --------------------
         const translations = {
             ar: {
@@ -2212,8 +2223,8 @@ const supabase = window.supabaseClient; // هذا سطر واحد فقط
             showLoading();
             
             try {
-                // التحقق من وجود المستخدم في Supabase
-                const { data: existingUser, error: checkError } = await supabase
+                // التحقق من وجود المستخدم في supabaseClient
+                const { data: existingUser, error: checkError } = await supabaseClient
                     .from('users')
                     .select('*')
                     .eq('username', username)
@@ -2227,8 +2238,8 @@ const supabase = window.supabaseClient; // هذا سطر واحد فقط
 
                 const hashed = await bcrypt.hash(password, 10);
                 
-                // إضافة المستخدم إلى Supabase
-                const { data: newUser, error: insertError } = await supabase
+                // إضافة المستخدم إلى supabaseClient
+                const { data: newUser, error: insertError } = await supabaseClient
                     .from('users')
                     .insert([
                         {
@@ -2274,8 +2285,8 @@ const supabase = window.supabaseClient; // هذا سطر واحد فقط
             showLoading();
             
             try {
-                // البحث عن المستخدم في Supabase
-                const { data: user, error } = await supabase
+                // البحث عن المستخدم في supabaseClient
+                const { data: user, error } = await supabaseClient
                     .from('users')
                     .select('*')
                     .eq('username', username)
@@ -2325,8 +2336,8 @@ const supabase = window.supabaseClient; // هذا سطر واحد فقط
             showLoading();
             
             try {
-                // حذف المستخدم من Supabase
-                const { error } = await supabase
+                // حذف المستخدم من supabaseClient
+                const { error } = await supabaseClient
                     .from('users')
                     .delete()
                     .eq('id', currentUser.id);
@@ -2350,14 +2361,14 @@ const supabase = window.supabaseClient; // هذا سطر واحد فقط
             showLoading();
             
             try {
-                // حذف جميع البيانات من Supabase
+                // حذف جميع البيانات من supabaseClient
                 const tables = ['users', 'patients_data', 'queue', 'followups', 'relations', 
                                'appointments', 'invoices', 'subscriptions', 'patient_images', 
                                'contracts', 'contract_modify_requests', 'ai_treatment_plans', 
                                'preliminary_diagnoses'];
                 
                 for (const table of tables) {
-                    await supabase.from(table).delete().neq('id', 0);
+                    await supabaseClient.from(table).delete().neq('id', 0);
                 }
 
                 resetAppModal.hide();
@@ -2397,20 +2408,20 @@ const supabase = window.supabaseClient; // هذا سطر واحد فقط
                     reader.onload = async (e) => {
                         const imageData = e.target.result;
                         
-                        // حفظ الصورة في Supabase Storage
+                        // حفظ الصورة في supabaseClient Storage
                         const fileName = `profile_${currentUser.id}_${Date.now()}.jpg`;
-                        const { error: uploadError } = await supabase.storage
+                        const { error: uploadError } = await supabaseClient.storage
                             .from('profiles')
                             .upload(fileName, file);
 
                         if (uploadError) throw uploadError;
 
-                        const { data: { publicUrl } } = supabase.storage
+                        const { data: { publicUrl } } = supabaseClient.storage
                             .from('profiles')
                             .getPublicUrl(fileName);
 
                         // تحديث صورة المستخدم في قاعدة البيانات
-                        const { error: updateError } = await supabase
+                        const { error: updateError } = await supabaseClient
                             .from('users')
                             .update({ profile_pic: publicUrl })
                             .eq('id', currentUser.id);
@@ -2438,7 +2449,7 @@ const supabase = window.supabaseClient; // هذا سطر واحد فقط
             showLoading();
             
             try {
-                const { data: sub, error } = await supabase
+                const { data: sub, error } = await supabaseClient
                     .from('subscriptions')
                     .select('*')
                     .eq('user_id', currentUser.id)
@@ -2472,7 +2483,7 @@ const supabase = window.supabaseClient; // هذا سطر واحد فقط
                 const expiry = new Date();
                 expiry.setMonth(expiry.getMonth() + 1);
 
-                const { error } = await supabase
+                const { error } = await supabaseClient
                     .from('subscriptions')
                     .upsert({
                         user_id: currentUser.id,
@@ -2658,14 +2669,14 @@ const supabase = window.supabaseClient; // هذا سطر واحد فقط
                     }
                     
                     // التحقق من أن المريض يمكنه أخذ دور واحد فقط في اليوم
-                    const { data: existingQueue, error: queueError } = await supabase
+                    const { data: existingQueue, error: queueError } = await supabaseClient
                         .from('queue')
                         .select('*')
                         .eq('patient_id', currentUser.id)
                         .eq('date', today);
 
                     if (existingQueue && existingQueue.length === 0) {
-                        const { data: todayQueue, error: todayError } = await supabase
+                        const { data: todayQueue, error: todayError } = await supabaseClient
                             .from('queue')
                             .select('turn_number')
                             .eq('date', today);
@@ -2674,7 +2685,7 @@ const supabase = window.supabaseClient; // هذا سطر واحد فقط
                         let newTurn = 1;
                         while (taken.includes(newTurn)) newTurn++;
                         
-                        const { error: insertError } = await supabase
+                        const { error: insertError } = await supabaseClient
                             .from('queue')
                             .insert({
                                 patient_id: currentUser.id,
@@ -2699,8 +2710,8 @@ const supabase = window.supabaseClient; // هذا سطر واحد فقط
         async function loadPersonalTab() {
             const c = document.getElementById('tab-personal');
             
-            // جلب بيانات المريض من Supabase
-            const { data: patientData, error } = await supabase
+            // جلب بيانات المريض من supabaseClient
+            const { data: patientData, error } = await supabaseClient
                 .from('patients_data')
                 .select('*')
                 .eq('user_id', currentUser.id)
@@ -2708,7 +2719,7 @@ const supabase = window.supabaseClient; // هذا سطر واحد فقط
 
             const saved = patientData?.personal || {};
             
-            const { data: doctors, error: doctorsError } = await supabase
+            const { data: doctors, error: doctorsError } = await supabaseClient
                 .from('users')
                 .select('*')
                 .eq('type', 'doctor');
@@ -2757,7 +2768,7 @@ const supabase = window.supabaseClient; // هذا سطر واحد فقط
                 showLoading();
                 
                 try {
-                    const { error } = await supabase
+                    const { error } = await supabaseClient
                         .from('patients_data')
                         .upsert({
                             user_id: currentUser.id,
@@ -2768,7 +2779,7 @@ const supabase = window.supabaseClient; // هذا سطر واحد فقط
                     if (error) throw error;
 
                     if (personal.clinic_id) {
-                        const { error: relationError } = await supabase
+                        const { error: relationError } = await supabaseClient
                             .from('relations')
                             .upsert({
                                 patient_id: currentUser.id,
@@ -2792,7 +2803,7 @@ const supabase = window.supabaseClient; // هذا سطر واحد فقط
         async function loadMedicalTab() {
             const c = document.getElementById('tab-medical');
             
-            const { data: patientData, error } = await supabase
+            const { data: patientData, error } = await supabaseClient
                 .from('patients_data')
                 .select('*')
                 .eq('user_id', currentUser.id)
@@ -2916,7 +2927,7 @@ const supabase = window.supabaseClient; // هذا سطر واحد فقط
                 showLoading();
                 
                 try {
-                    const { error } = await supabase
+                    const { error } = await supabaseClient
                         .from('patients_data')
                         .upsert({
                             user_id: currentUser.id,
@@ -2939,7 +2950,7 @@ const supabase = window.supabaseClient; // هذا سطر واحد فقط
         async function loadDentalTab() {
             const c = document.getElementById('tab-dental');
             
-            const { data: patientData, error } = await supabase
+            const { data: patientData, error } = await supabaseClient
                 .from('patients_data')
                 .select('*')
                 .eq('user_id', currentUser.id)
@@ -3023,7 +3034,7 @@ const supabase = window.supabaseClient; // هذا سطر واحد فقط
                 showLoading();
                 
                 try {
-                    const { error } = await supabase
+                    const { error } = await supabaseClient
                         .from('patients_data')
                         .upsert({
                             user_id: currentUser.id,
@@ -3046,7 +3057,7 @@ const supabase = window.supabaseClient; // هذا سطر واحد فقط
         async function loadReasonTab() {
             const c = document.getElementById('tab-reason');
             
-            const { data: patientData, error } = await supabase
+            const { data: patientData, error } = await supabaseClient
                 .from('patients_data')
                 .select('*')
                 .eq('user_id', currentUser.id)
@@ -3127,20 +3138,20 @@ const supabase = window.supabaseClient; // هذا سطر واحد فقط
                         reader.onload = async (ev) => {
                             const imageData = ev.target.result;
                             
-                            // حفظ الصورة في Supabase Storage
+                            // حفظ الصورة في supabaseClient Storage
                             const fileName = `xray_${currentUser.id}_${Date.now()}.jpg`;
-                            const { error: uploadError } = await supabase.storage
+                            const { error: uploadError } = await supabaseClient.storage
                                 .from('xrays')
                                 .upload(fileName, file);
 
                             if (uploadError) throw uploadError;
 
-                            const { data: { publicUrl } } = supabase.storage
+                            const { data: { publicUrl } } = supabaseClient.storage
                                 .from('xrays')
                                 .getPublicUrl(fileName);
 
                             // تحديث صورة الأشعة في قاعدة البيانات
-                            const { error: updateError } = await supabase
+                            const { error: updateError } = await supabaseClient
                                 .from('patients_data')
                                 .upsert({
                                     user_id: currentUser.id,
@@ -3177,7 +3188,7 @@ const supabase = window.supabaseClient; // هذا سطر واحد فقط
                 showLoading();
                 
                 try {
-                    const { error } = await supabase
+                    const { error } = await supabaseClient
                         .from('patients_data')
                         .upsert({
                             user_id: currentUser.id,
@@ -3231,7 +3242,7 @@ const supabase = window.supabaseClient; // هذا سطر واحد فقط
         async function loadTreatmentTab() {
             const c = document.getElementById('tab-treatment');
             
-            const { data: patientData, error } = await supabase
+            const { data: patientData, error } = await supabaseClient
                 .from('patients_data')
                 .select('*')
                 .eq('user_id', currentUser.id)
@@ -3277,19 +3288,19 @@ const supabase = window.supabaseClient; // هذا سطر واحد فقط
         async function loadContractTab() {
             const c = document.getElementById('tab-contract');
             
-            const { data: patientData, error: patientError } = await supabase
+            const { data: patientData, error: patientError } = await supabaseClient
                 .from('patients_data')
                 .select('*')
                 .eq('user_id', currentUser.id)
                 .maybeSingle();
 
-            const { data: contractData, error: contractError } = await supabase
+            const { data: contractData, error: contractError } = await supabaseClient
                 .from('contracts')
                 .select('*')
                 .eq('patient_id', currentUser.id)
                 .maybeSingle();
 
-            const { data: modifyRequest, error: modifyError } = await supabase
+            const { data: modifyRequest, error: modifyError } = await supabaseClient
                 .from('contract_modify_requests')
                 .select('*')
                 .eq('patient_id', currentUser.id)
@@ -3300,7 +3311,7 @@ const supabase = window.supabaseClient; // هذا سطر واحد فقط
             const risks = patientData?.risks || (currentLang === 'ar' ? 'لا توجد مخاطر محددة' : 'No specific risks');
             
             let doctorName = (currentUser.type === 'patient' && patientData?.personal?.clinic_id)
-                ? (await supabase.from('users').select('name').eq('id', patientData.personal.clinic_id).single()).data?.name || (currentLang === 'ar' ? 'الطبيب' : 'Doctor')
+                ? (await supabaseClient.from('users').select('name').eq('id', patientData.personal.clinic_id).single()).data?.name || (currentLang === 'ar' ? 'الطبيب' : 'Doctor')
                 : (currentLang === 'ar' ? 'الطبيب' : 'Doctor');
                 
             const contractStatus = contractData?.status || 'pending';
@@ -3412,7 +3423,7 @@ const supabase = window.supabaseClient; // هذا سطر واحد فقط
                         showLoading();
                         
                         try {
-                            const { error } = await supabase
+                            const { error } = await supabaseClient
                                 .from('contracts')
                                 .upsert({
                                     patient_id: currentUser.id,
@@ -3439,7 +3450,7 @@ const supabase = window.supabaseClient; // هذا سطر واحد فقط
                         showLoading();
                         
                         try {
-                            const { error } = await supabase
+                            const { error } = await supabaseClient
                                 .from('contracts')
                                 .upsert({
                                     patient_id: currentUser.id,
@@ -3472,7 +3483,7 @@ const supabase = window.supabaseClient; // هذا سطر واحد فقط
                         
                         try {
                             // تحديث بيانات المريض
-                            const { error: patientError } = await supabase
+                            const { error: patientError } = await supabaseClient
                                 .from('patients_data')
                                 .upsert({
                                     user_id: currentUser.id,
@@ -3485,7 +3496,7 @@ const supabase = window.supabaseClient; // هذا سطر واحد فقط
                             if (patientError) throw patientError;
 
                             // تحديث العقد
-                            const { error: contractError } = await supabase
+                            const { error: contractError } = await supabaseClient
                                 .from('contracts')
                                 .upsert({
                                     patient_id: currentUser.id,
@@ -3513,11 +3524,11 @@ const supabase = window.supabaseClient; // هذا سطر واحد فقط
             
             try {
                 if (approve) {
-                    await supabase.from('contracts').delete().eq('patient_id', patientId);
-                    await supabase.from('contract_modify_requests').delete().eq('patient_id', patientId);
+                    await supabaseClient.from('contracts').delete().eq('patient_id', patientId);
+                    await supabaseClient.from('contract_modify_requests').delete().eq('patient_id', patientId);
                     showToast(currentLang === 'ar' ? 'تمت الموافقة، يمكن للطبيب التعديل الآن' : 'Approved, doctor can modify now');
                 } else {
-                    await supabase.from('contract_modify_requests').upsert({
+                    await supabaseClient.from('contract_modify_requests').upsert({
                         patient_id: patientId,
                         status: 'rejected',
                         updated_at: new Date().toISOString()
@@ -3548,24 +3559,24 @@ const supabase = window.supabaseClient; // هذا سطر واحد فقط
             showLoading();
             
             try {
-                const { data: patient, error: patientError } = await supabase
+                const { data: patient, error: patientError } = await supabaseClient
                     .from('users')
                     .select('*')
                     .eq('id', patientId)
                     .single();
 
-                const { data: info, error: infoError } = await supabase
+                const { data: info, error: infoError } = await supabaseClient
                     .from('patients_data')
                     .select('*')
                     .eq('user_id', patientId)
                     .maybeSingle();
 
-                const { data: images, error: imagesError } = await supabase
+                const { data: images, error: imagesError } = await supabaseClient
                     .from('patient_images')
                     .select('*')
                     .eq('patient_id', patientId);
 
-                const { data: contract, error: contractError } = await supabase
+                const { data: contract, error: contractError } = await supabaseClient
                     .from('contracts')
                     .select('*')
                     .eq('patient_id', patientId)
@@ -3712,19 +3723,19 @@ const supabase = window.supabaseClient; // هذا سطر واحد فقط
         };
 
         async function renderMyDoctors() {
-            const { data: myRelations, error: relationsError } = await supabase
+            const { data: myRelations, error: relationsError } = await supabaseClient
                 .from('relations')
                 .select('doctor_id')
                 .eq('patient_id', currentUser.id);
 
             const doctorIds = myRelations?.map(r => r.doctor_id) || [];
             
-            const { data: doctors, error: doctorsError } = await supabase
+            const { data: doctors, error: doctorsError } = await supabaseClient
                 .from('users')
                 .select('*')
                 .in('id', doctorIds);
 
-            const { data: patientData, error: patientError } = await supabase
+            const { data: patientData, error: patientError } = await supabaseClient
                 .from('patients_data')
                 .select('personal')
                 .eq('user_id', currentUser.id)
@@ -3746,7 +3757,7 @@ const supabase = window.supabaseClient; // هذا سطر واحد فقط
         }
 
         async function renderPatientAppointments() {
-            const { data: myFollowups, error } = await supabase
+            const { data: myFollowups, error } = await supabaseClient
                 .from('followups')
                 .select('*, doctor:users!doctor_id(name)')
                 .eq('patient_id', currentUser.id);
@@ -4045,14 +4056,14 @@ const supabase = window.supabaseClient; // هذا سطر واحد فقط
 
         // دوال AI Assistant
         async function populateAIPatientSelect() {
-            const { data: myRelations, error } = await supabase
+            const { data: myRelations, error } = await supabaseClient
                 .from('relations')
                 .select('patient_id')
                 .eq('doctor_id', currentUser.id);
 
             const patientIds = myRelations?.map(r => r.patient_id) || [];
             
-            const { data: patients, error: patientsError } = await supabase
+            const { data: patients, error: patientsError } = await supabaseClient
                 .from('users')
                 .select('*')
                 .in('id', patientIds);
@@ -4066,13 +4077,13 @@ const supabase = window.supabaseClient; // هذا سطر واحد فقط
             const patientId = document.getElementById('aiPatientSelect').value;
             if (!patientId) return;
             
-            const { data: patient, error: patientError } = await supabase
+            const { data: patient, error: patientError } = await supabaseClient
                 .from('users')
                 .select('*')
                 .eq('id', patientId)
                 .single();
 
-            const { data: info, error: infoError } = await supabase
+            const { data: info, error: infoError } = await supabaseClient
                 .from('patients_data')
                 .select('*')
                 .eq('user_id', patientId)
@@ -4114,13 +4125,13 @@ const supabase = window.supabaseClient; // هذا سطر واحد فقط
 
             showLoading();
             
-            const { data: patient, error: patientError } = await supabase
+            const { data: patient, error: patientError } = await supabaseClient
                 .from('users')
                 .select('*')
                 .eq('id', patientId)
                 .single();
 
-            const { data: info, error: infoError } = await supabase
+            const { data: info, error: infoError } = await supabaseClient
                 .from('patients_data')
                 .select('*')
                 .eq('user_id', patientId)
@@ -4224,7 +4235,7 @@ const supabase = window.supabaseClient; // هذا سطر واحد فقط
                         };
                     }
                     
-                    await supabase.from('preliminary_diagnoses').insert({
+                    await supabaseClient.from('preliminary_diagnoses').insert({
                         patient_id: patientId,
                         diagnosis: diagnosisData,
                         date: new Date().toISOString(),
@@ -4240,7 +4251,7 @@ const supabase = window.supabaseClient; // هذا سطر واحد فقط
                 hideLoading();
                 const mockDiagnosis = generateMockPreliminaryDiagnosis(patientData);
                 
-                await supabase.from('preliminary_diagnoses').insert({
+                await supabaseClient.from('preliminary_diagnoses').insert({
                     patient_id: patientId,
                     diagnosis: mockDiagnosis,
                     date: new Date().toISOString(),
@@ -4436,7 +4447,7 @@ const supabase = window.supabaseClient; // هذا سطر واحد فقط
             showLoading();
             
             try {
-                await supabase.from('patients_data').upsert({
+                await supabaseClient.from('patients_data').upsert({
                     user_id: patientId,
                     doctorDiagnosis: diagnosisText,
                     treatmentPlan: treatmentPlan,
@@ -4463,30 +4474,30 @@ const supabase = window.supabaseClient; // هذا سطر واحد فقط
 
         // تحديث دالة showPatientDetails
         window.showPatientDetails = async function(patientId) {
-            const { data: patient, error: patientError } = await supabase
+            const { data: patient, error: patientError } = await supabaseClient
                 .from('users')
                 .select('*')
                 .eq('id', patientId)
                 .single();
 
-            const { data: info, error: infoError } = await supabase
+            const { data: info, error: infoError } = await supabaseClient
                 .from('patients_data')
                 .select('*')
                 .eq('user_id', patientId)
                 .maybeSingle();
 
-            const { data: images, error: imagesError } = await supabase
+            const { data: images, error: imagesError } = await supabaseClient
                 .from('patient_images')
                 .select('*')
                 .eq('patient_id', patientId);
 
-            const { data: contract, error: contractError } = await supabase
+            const { data: contract, error: contractError } = await supabaseClient
                 .from('contracts')
                 .select('*')
                 .eq('patient_id', patientId)
                 .maybeSingle();
 
-            const { data: modifyRequest, error: modifyError } = await supabase
+            const { data: modifyRequest, error: modifyError } = await supabaseClient
                 .from('contract_modify_requests')
                 .select('*')
                 .eq('patient_id', patientId)
@@ -4648,17 +4659,17 @@ const supabase = window.supabaseClient; // هذا سطر واحد فقط
                         const file = files[i];
                         const fileName = `patient_${patientId}_${Date.now()}_${i}.jpg`;
                         
-                        const { error: uploadError } = await supabase.storage
+                        const { error: uploadError } = await supabaseClient.storage
                             .from('patient_images')
                             .upload(fileName, file);
 
                         if (uploadError) throw uploadError;
 
-                        const { data: { publicUrl } } = supabase.storage
+                        const { data: { publicUrl } } = supabaseClient.storage
                             .from('patient_images')
                             .getPublicUrl(fileName);
 
-                        await supabase.from('patient_images').insert({
+                        await supabaseClient.from('patient_images').insert({
                             patient_id: patientId,
                             url: publicUrl,
                             category: category,
@@ -4690,7 +4701,7 @@ const supabase = window.supabaseClient; // هذا سطر واحد فقط
             
             try {
                 for (const imageId of selectedImages) {
-                    await supabase.from('patient_images').delete().eq('id', imageId);
+                    await supabaseClient.from('patient_images').delete().eq('id', imageId);
                 }
                 
                 selectedImages.clear();
@@ -4710,7 +4721,7 @@ const supabase = window.supabaseClient; // هذا سطر واحد فقط
         };
 
         async function loadDashboardData() {
-            const { data: myRelations, error } = await supabase
+            const { data: myRelations, error } = await supabaseClient
                 .from('relations')
                 .select('patient_id')
                 .eq('doctor_id', currentUser.id);
@@ -4719,13 +4730,13 @@ const supabase = window.supabaseClient; // هذا سطر واحد فقط
             
             const today = new Date().toLocaleDateString('en-CA');
             
-            const { data: appointmentsToday, error: appError } = await supabase
+            const { data: appointmentsToday, error: appError } = await supabaseClient
                 .from('appointments')
                 .select('*')
                 .eq('doctor_id', currentUser.id)
                 .eq('date', today);
 
-            const { data: invoicesData, error: invError } = await supabase
+            const { data: invoicesData, error: invError } = await supabaseClient
                 .from('invoices')
                 .select('*')
                 .eq('doctor_id', currentUser.id);
@@ -4740,14 +4751,14 @@ const supabase = window.supabaseClient; // هذا سطر واحد فقط
         }
 
         async function loadPatientsList() {
-            const { data: myRelations, error } = await supabase
+            const { data: myRelations, error } = await supabaseClient
                 .from('relations')
                 .select('patient_id')
                 .eq('doctor_id', currentUser.id);
 
             const patientIds = myRelations?.map(r => r.patient_id) || [];
             
-            const { data: patients, error: patientsError } = await supabase
+            const { data: patients, error: patientsError } = await supabaseClient
                 .from('users')
                 .select('*')
                 .in('id', patientIds);
@@ -4778,7 +4789,7 @@ const supabase = window.supabaseClient; // هذا سطر واحد فقط
                 endOfMonth.setHours(23, 59, 59, 999);
 
                 filtered = filtered.filter(async p => {
-                    const { data: patientAppointments, error } = await supabase
+                    const { data: patientAppointments, error } = await supabaseClient
                         .from('appointments')
                         .select('*')
                         .eq('patient_id', p.id);
@@ -4800,7 +4811,7 @@ const supabase = window.supabaseClient; // هذا سطر واحد فقط
 
             if (filterDiagnosis) {
                 filtered = filtered.filter(async p => {
-                    const { data: info, error } = await supabase
+                    const { data: info, error } = await supabaseClient
                         .from('patients_data')
                         .select('doctorDiagnosis')
                         .eq('user_id', p.id)
@@ -4814,7 +4825,7 @@ const supabase = window.supabaseClient; // هذا سطر واحد فقط
             let html = '';
             
             for (const p of filtered) {
-                const { data: info, error } = await supabase
+                const { data: info, error } = await supabaseClient
                     .from('patients_data')
                     .select('personal')
                     .eq('user_id', p.id)
@@ -4839,14 +4850,14 @@ const supabase = window.supabaseClient; // هذا سطر واحد فقط
         }
 
         async function populatePatientSelects() {
-            const { data: myRelations, error } = await supabase
+            const { data: myRelations, error } = await supabaseClient
                 .from('relations')
                 .select('patient_id')
                 .eq('doctor_id', currentUser.id);
 
             const patientIds = myRelations?.map(r => r.patient_id) || [];
             
-            const { data: patients, error: patientsError } = await supabase
+            const { data: patients, error: patientsError } = await supabaseClient
                 .from('users')
                 .select('*')
                 .in('id', patientIds);
@@ -4875,7 +4886,7 @@ const supabase = window.supabaseClient; // هذا سطر واحد فقط
             showLoading();
             
             try {
-                const { error } = await supabase.from('appointments').insert({
+                const { error } = await supabaseClient.from('appointments').insert({
                     patient_id: patientId,
                     doctor_id: currentUser.id,
                     date: date,
@@ -4896,7 +4907,7 @@ const supabase = window.supabaseClient; // هذا سطر واحد فقط
         }
 
         window.editAppointment = async function(appointmentId) {
-            const { data: app, error } = await supabase
+            const { data: app, error } = await supabaseClient
                 .from('appointments')
                 .select('*')
                 .eq('id', appointmentId)
@@ -4913,7 +4924,7 @@ const supabase = window.supabaseClient; // هذا سطر واحد فقط
             showLoading();
             
             try {
-                const { error: updateError } = await supabase
+                const { error: updateError } = await supabaseClient
                     .from('appointments')
                     .update({
                         date: newDate,
@@ -4937,7 +4948,7 @@ const supabase = window.supabaseClient; // هذا سطر واحد فقط
         async function loadAppointmentsList() {
             const today = new Date().toLocaleDateString('en-CA');
             
-            const { data: upcomingApps, error: appError } = await supabase
+            const { data: upcomingApps, error: appError } = await supabaseClient
                 .from('appointments')
                 .select('*, patient:users!patient_id(name)')
                 .eq('doctor_id', currentUser.id)
@@ -4945,7 +4956,7 @@ const supabase = window.supabaseClient; // هذا سطر واحد فقط
                 .order('date', { ascending: true })
                 .order('time', { ascending: true });
 
-            const { data: followupApps, error: followError } = await supabase
+            const { data: followupApps, error: followError } = await supabaseClient
                 .from('followups')
                 .select('*, patient:users!patient_id(name)')
                 .eq('doctor_id', currentUser.id)
@@ -4971,7 +4982,7 @@ const supabase = window.supabaseClient; // هذا سطر واحد فقط
         async function checkAppointments() {
             const today = new Date().toLocaleDateString('en-CA');
             
-            const { data: todaysApps, error } = await supabase
+            const { data: todaysApps, error } = await supabaseClient
                 .from('appointments')
                 .select('*, patient:users!patient_id(name)')
                 .eq('doctor_id', currentUser.id)
@@ -4995,7 +5006,7 @@ const supabase = window.supabaseClient; // هذا سطر واحد فقط
             showLoading();
             
             try {
-                const { error } = await supabase.from('invoices').insert({
+                const { error } = await supabaseClient.from('invoices').insert({
                     patient_id: patientId,
                     doctor_id: currentUser.id,
                     service: service,
@@ -5019,7 +5030,7 @@ const supabase = window.supabaseClient; // هذا سطر واحد فقط
         }
 
         async function loadInvoicesList() {
-            const { data: invs, error } = await supabase
+            const { data: invs, error } = await supabaseClient
                 .from('invoices')
                 .select('*, patient:users!patient_id(name)')
                 .eq('doctor_id', currentUser.id)
@@ -5125,7 +5136,7 @@ const supabase = window.supabaseClient; // هذا سطر واحد فقط
         async function renderDoctorDashboard() {
             const today = new Date().toLocaleDateString('en-CA');
             
-            const { data: tq, error } = await supabase
+            const { data: tq, error } = await supabaseClient
                 .from('queue')
                 .select('*, patient:users!patient_id(name)')
                 .eq('date', today);
@@ -5135,7 +5146,7 @@ const supabase = window.supabaseClient; // هذا سطر واحد فقط
             const followup = (tq || []).filter(q => q.status === 'followup');
             const done = (tq || []).filter(q => q.status === 'done');
 
-            const { data: followupDates, error: followError } = await supabase
+            const { data: followupDates, error: followError } = await supabaseClient
                 .from('followups')
                 .select('patient_id, date')
                 .eq('doctor_id', currentUser.id);
@@ -5191,7 +5202,7 @@ const supabase = window.supabaseClient; // هذا سطر واحد فقط
         window.startSession = async function(patientId) {
             const today = new Date().toLocaleDateString('en-CA');
             
-            const { data: current, error: currentError } = await supabase
+            const { data: current, error: currentError } = await supabaseClient
                 .from('queue')
                 .select('*')
                 .eq('date', today)
@@ -5199,13 +5210,13 @@ const supabase = window.supabaseClient; // هذا سطر واحد فقط
                 .maybeSingle();
 
             if (current) {
-                await supabase
+                await supabaseClient
                     .from('queue')
                     .update({ status: 'waiting', updated_at: new Date().toISOString() })
                     .eq('id', current.id);
             }
 
-            const { data: p, error: patientError } = await supabase
+            const { data: p, error: patientError } = await supabaseClient
                 .from('queue')
                 .select('*')
                 .eq('date', today)
@@ -5214,7 +5225,7 @@ const supabase = window.supabaseClient; // هذا سطر واحد فقط
                 .maybeSingle();
 
             if (p) {
-                await supabase
+                await supabaseClient
                     .from('queue')
                     .update({ status: 'current', updated_at: new Date().toISOString() })
                     .eq('id', p.id);
@@ -5222,7 +5233,7 @@ const supabase = window.supabaseClient; // هذا سطر واحد فقط
                 renderDoctorDashboard();
                 showPatientDetails(patientId);
                 
-                const { data: patient, error } = await supabase
+                const { data: patient, error } = await supabaseClient
                     .from('users')
                     .select('name')
                     .eq('id', patientId)
@@ -5237,7 +5248,7 @@ const supabase = window.supabaseClient; // هذا سطر واحد فقط
         window.markAsDone = async function(patientId) {
             const today = new Date().toLocaleDateString('en-CA');
             
-            const { data: current, error } = await supabase
+            const { data: current, error } = await supabaseClient
                 .from('queue')
                 .select('*')
                 .eq('date', today)
@@ -5245,12 +5256,12 @@ const supabase = window.supabaseClient; // هذا سطر واحد فقط
                 .maybeSingle();
 
             if (current && current.patient_id === patientId) {
-                await supabase
+                await supabaseClient
                     .from('queue')
                     .update({ status: 'done', updated_at: new Date().toISOString() })
                     .eq('id', current.id);
 
-                const { data: next, error: nextError } = await supabase
+                const { data: next, error: nextError } = await supabaseClient
                     .from('queue')
                     .select('*')
                     .eq('date', today)
@@ -5260,7 +5271,7 @@ const supabase = window.supabaseClient; // هذا سطر واحد فقط
                     .maybeSingle();
 
                 if (next) {
-                    await supabase
+                    await supabaseClient
                         .from('queue')
                         .update({ status: 'current', updated_at: new Date().toISOString() })
                         .eq('id', next.id);
@@ -5289,7 +5300,7 @@ const supabase = window.supabaseClient; // هذا سطر واحد فقط
 
             const today = new Date().toLocaleDateString('en-CA');
             
-            const { data: current, error } = await supabase
+            const { data: current, error } = await supabaseClient
                 .from('queue')
                 .select('*')
                 .eq('date', today)
@@ -5297,12 +5308,12 @@ const supabase = window.supabaseClient; // هذا سطر واحد فقط
                 .maybeSingle();
 
             if (current && current.patient_id === selectedPatientForFollowup) {
-                await supabase
+                await supabaseClient
                     .from('queue')
                     .update({ status: 'followup', updated_at: new Date().toISOString() })
                     .eq('id', current.id);
             } else {
-                const { data: waitingPatient, error: waitError } = await supabase
+                const { data: waitingPatient, error: waitError } = await supabaseClient
                     .from('queue')
                     .select('*')
                     .eq('date', today)
@@ -5311,14 +5322,14 @@ const supabase = window.supabaseClient; // هذا سطر واحد فقط
                     .maybeSingle();
 
                 if (waitingPatient) {
-                    await supabase
+                    await supabaseClient
                         .from('queue')
                         .update({ status: 'followup', updated_at: new Date().toISOString() })
                         .eq('id', waitingPatient.id);
                 }
             }
 
-            await supabase.from('followups').insert({
+            await supabaseClient.from('followups').insert({
                 patient_id: selectedPatientForFollowup,
                 doctor_id: currentUser.id,
                 date: date,
@@ -5326,7 +5337,7 @@ const supabase = window.supabaseClient; // هذا سطر واحد فقط
                 created_at: new Date().toISOString()
             });
 
-            const { data: nextWaiting, error: nextError } = await supabase
+            const { data: nextWaiting, error: nextError } = await supabaseClient
                 .from('queue')
                 .select('*')
                 .eq('date', today)
@@ -5336,7 +5347,7 @@ const supabase = window.supabaseClient; // هذا سطر واحد فقط
                 .maybeSingle();
 
             if (nextWaiting) {
-                await supabase
+                await supabaseClient
                     .from('queue')
                     .update({ status: 'current', updated_at: new Date().toISOString() })
                     .eq('id', nextWaiting.id);
@@ -5348,19 +5359,19 @@ const supabase = window.supabaseClient; // هذا سطر واحد فقط
         });
 
         window.viewContract = async function(patientId) {
-            const { data: patient, error: patientError } = await supabase
+            const { data: patient, error: patientError } = await supabaseClient
                 .from('users')
                 .select('*')
                 .eq('id', patientId)
                 .single();
 
-            const { data: info, error: infoError } = await supabase
+            const { data: info, error: infoError } = await supabaseClient
                 .from('patients_data')
                 .select('*')
                 .eq('user_id', patientId)
                 .maybeSingle();
 
-            const { data: contract, error: contractError } = await supabase
+            const { data: contract, error: contractError } = await supabaseClient
                 .from('contracts')
                 .select('*')
                 .eq('patient_id', patientId)
@@ -5395,14 +5406,14 @@ const supabase = window.supabaseClient; // هذا سطر واحد فقط
         };
 
         window.requestContractModify = async function(patientId) {
-            const { data: contract, error } = await supabase
+            const { data: contract, error } = await supabaseClient
                 .from('contracts')
                 .select('status')
                 .eq('patient_id', patientId)
                 .maybeSingle();
 
             if (contract?.status === 'approved') {
-                await supabase.from('contract_modify_requests').upsert({
+                await supabaseClient.from('contract_modify_requests').upsert({
                     patient_id: patientId,
                     status: 'pending',
                     created_at: new Date().toISOString()
@@ -5418,13 +5429,13 @@ const supabase = window.supabaseClient; // هذا سطر واحد فقط
             const risks = document.getElementById('risks').value;
             const comment = document.getElementById('doctorComment').value;
             
-            const { data: contract, error: contractError } = await supabase
+            const { data: contract, error: contractError } = await supabaseClient
                 .from('contracts')
                 .select('status')
                 .eq('patient_id', patientId)
                 .maybeSingle();
 
-            const { data: modifyRequest, error: modifyError } = await supabase
+            const { data: modifyRequest, error: modifyError } = await supabaseClient
                 .from('contract_modify_requests')
                 .select('status')
                 .eq('patient_id', patientId)
@@ -5440,7 +5451,7 @@ const supabase = window.supabaseClient; // هذا سطر واحد فقط
             showLoading();
             
             try {
-                await supabase.from('patients_data').upsert({
+                await supabaseClient.from('patients_data').upsert({
                     user_id: patientId,
                     doctorDiagnosis: diagnosis,
                     treatmentPlan: treatmentPlan,
@@ -5450,11 +5461,11 @@ const supabase = window.supabaseClient; // هذا سطر واحد فقط
                 });
 
                 if (modifyRequest) {
-                    await supabase.from('contract_modify_requests').delete().eq('patient_id', patientId);
+                    await supabaseClient.from('contract_modify_requests').delete().eq('patient_id', patientId);
                 }
 
                 if (contract) {
-                    await supabase.from('contracts').delete().eq('patient_id', patientId);
+                    await supabaseClient.from('contracts').delete().eq('patient_id', patientId);
                 }
 
                 showToast(translations[currentLang].contractSaved);
