@@ -1603,11 +1603,24 @@
             }
         })();
 
-       // تهيئة Supabase
+// ------------------------------------------------------------
+// تهيئة Supabase - تعريف واحد فقط
+// ------------------------------------------------------------
 const supabaseUrl = 'https://bnuwgkugddpjnaheneck.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...';
-const { createClient } = supabase;
-const supabaseClient = createClient(supabaseUrl, supabaseKey);
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJudXdna3VnZGRwam5haGVuZWNrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyNzI5NzEsImV4cCI6MjA4ODg0ODk3MX0.HG6kTbMR-klXqYRiJc4nPEGVoZIe0cwAIS8fWoe0Qds';
+
+// نتأكد أن المكتبة حملت
+if (typeof supabase === 'undefined' || !supabase.createClient) {
+    console.error('❌ مكتبة Supabase لم يتم تحميلها!');
+} else {
+    console.log('✅ تم تحميل مكتبة Supabase');
+    const { createClient } = supabase;
+    window.supabaseClient = createClient(supabaseUrl, supabaseKey);
+    console.log('✅ تم تهيئة Supabase Client');
+}
+
+// الآن نستخدم window.supabaseClient في كل مكان
+const supabase = window.supabaseClient; // هذا سطر واحد فقط
         // -------------------- الترجمة --------------------
         const translations = {
             ar: {
