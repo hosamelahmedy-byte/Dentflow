@@ -1603,11 +1603,11 @@
             }
         })();
 
-        // تهيئة Supabase - ضع بياناتك هنا
-        const supabaseUrl = 'https://bnuwgkugddpjnaheneck.supabase.co';
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJudXdna3VnZGRwam5haGVuZWNrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyNzI5NzEsImV4cCI6MjA4ODg0ODk3MX0.HG6kTbMR-klXqYRiJc4nPEGVoZIe0cwAIS8fWoe0Qds';
-        const supabase = supabase.createClient(supabaseUrl, supabaseKey);
-
+       // تهيئة Supabase
+const supabaseUrl = 'https://bnuwgkugddpjnaheneck.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...';
+const { createClient } = supabase;
+const supabaseClient = createClient(supabaseUrl, supabaseKey);
         // -------------------- الترجمة --------------------
         const translations = {
             ar: {
