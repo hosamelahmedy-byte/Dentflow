@@ -4420,7 +4420,7 @@
                 }
             };
 
-            // بدء التشغيل
+                        // بدء التشغيل
             const saved = localStorage.getItem('dentflow_currentUser');
             
             if (saved) {
@@ -4435,9 +4435,11 @@
             
             updateUILanguage();
             
-            // بعد كل التهيئة، نبدأ التطبيق
-            await startApp();
-        })();
+            // تأكد من تحميل الصفحة ثم بدء التطبيق
+            window.addEventListener('load', async function() {
+                await startApp();
+            });
+        })(); // هذا يغلق الدالة الرئيسية
     </script>
 </body>
 </html>
